@@ -19,7 +19,7 @@
 <p class="lead">
     <a class="btn btn-warning btn-lg" href="#" role="button">Previous</a>
     <button class="btn btn-danger btn-lg" role="button" onclick="end()">End</button>
-    <button id="start" class="btn btn-primary btn-lg float-right" onclick="start()">Start</button>
+    <button id="start" class="btn btn-primary btn-lg float-right" onclick="start();">Start</button>
 </p>
 
 
@@ -46,7 +46,6 @@ function init() {
     $.getJSON($SCRIPT_ROOT + '/calibrations/sequence', function(data) {
         curr_cal = 0;
         num_cals = data.length;
-        console.log(data[curr_cal]);
     });
 
     $.getJSON($SCRIPT_ROOT + '/gestures/sequence/' + num_reps, function(data) {
@@ -55,6 +54,7 @@ function init() {
         num_tests_rep = num_tests / num_reps;
         curr_rep = 0;
         curr_test = 0;
+        next_test();
     });
 }
 

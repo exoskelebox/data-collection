@@ -16,7 +16,7 @@ def data_form():
     form = DataForm()
 
     if form.validate_on_submit():
-        return render_template('calibrate.html', form=form)
+        return render_template('test.html', form=form)
     return render_template('register.html', form=form)
 
 
