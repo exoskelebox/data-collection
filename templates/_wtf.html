@@ -1,0 +1,67 @@
+{% macro render_field(field) %}
+<div class="form-group {% if field.errors %} has-error{% endif -%} {%- if field.flags.required %} required{% endif -%}">
+
+{% if field.type == 'FileField' %}
+  {{field.label(class="control-label")|safe}}
+  {{field(**kwargs)|safe}}
+{% elif field.type == 'SubmitField' %}
+  {{field.label(class="sr-only")|safe}}
+  {{field(class="btn btn-primary",**kwargs)|safe}}
+{% elif field | has_um %}
+  {{field.label(class="control-label")|safe}}
+    
+  <div class="input-group">
+    {{field(class="form-control", **kwargs)|safe}}
+    <div class="input-group-append">
+      <span class="input-group-text">{{ field.render_kw['um']|safe}}</span>
+    </div>
+  </div>
+{% else %}
+  {{field.label(class="control-label")|safe}}
+  {{field(class="form-control", **kwargs)|safe}}
+{% endif %}
+
+{%- if field.errors %}
+  {%- for error in field.errors %}
+    <p class="help-block text-danger">{{error|safe}}</p>
+  {%- endfor %}
+{%- elif field.description -%}
+  <p class="help-block text-info">{{field.description|safe}}</p>
+{%- endif %}
+
+</div>
+
+{% endmacro %}
+
+{% macro render_form(
+  form,
+  action="",
+  method="post",
+  extra_classes=None,
+  role="form",
+  id="",
+  novalidate=False,
+  render_kw={}
+)%}
+
+<form 
+  {%- if action != None %} action="{{action}}" {% endif -%} 
+  {%- if id %} id="{{id}}" {% endif -%} 
+  {%- if method %} method="{{method}}" {% endif %} 
+  class="form {%- if extra_classes %} {{extra_classes}}{% endif -%}" 
+  {%- if role %} role="{{role}}" {% endif -%}
+  {%- if novalidate %} novalidate{% endif -%} 
+  {%- if render_kw %} {{render_kw|xmlattr}}{% endif -%}>
+  {{ form.hidden_tag() }}
+  
+  {% for field in form %}
+    {% if not field | is_hidden_field -%}
+
+      {{render_field(field)}}
+
+    {% endif %}
+  {% endfor %}
+</form>
+
+
+{% endmacro %}

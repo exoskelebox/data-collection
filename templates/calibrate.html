@@ -1,0 +1,24 @@
+{%- extends "base.html" %}
+
+{% block content %}
+
+<img id="image" src="//:0"
+    class="img-fluid img-thumbnail mx-auto d-block mb-2" alt="Responsive image">
+
+<p id="repetition" class="lead"></p>
+<p id="test" class="lead"></p>
+
+<p class="text-justify text-info">Position your right hand as shown. When your hand is in position, you can start
+    the test by clicking on the
+    'start' button or pressing any key on the keyboard to start the data collection. When the test starts a progress
+    bar will show up, once the progress bar is filled the test is complete. During the test it is important you keep
+    your hand as still as possible. If you want to redo the previous test, click the 'previous' button. If you do
+    not wish to continue with more tests, you can click the 'end' button.</p>
+
+<p class="lead">
+    <a class="btn btn-warning btn-lg" href="#" role="button">Previous</a>
+    <button class="btn btn-danger btn-lg" role="button" onclick="end()">End</button>
+    <button id="start" class="btn btn-primary btn-lg float-right" onclick="start()">Start</button>
+</p>
+
+{%- endblock %}
