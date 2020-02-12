@@ -1,7 +1,30 @@
+import json
 from flask_wtf import FlaskForm
-from wtforms.fields import SelectField, IntegerField, SubmitField
+from wtforms.widgets import HiddenInput, TextInput
+from wtforms.fields import SelectField, IntegerField, SubmitField, StringField, Field
 from wtforms.validators import NumberRange, InputRequired
 
+class JSONField(Field):
+    def _value(self):
+        return json.dumps(self.data) if self.data else ''
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            try:
+                self.data = json.loads(valuelist[0])
+            except ValueError:
+                self.data = {}
+                raise ValueError('This field contains invalid JSON')
+        else:
+            self.data = None
+
+    def pre_validate(self, form):
+        super().pre_validate(form)
+        if self.data:
+            try:
+                json.dumps(self.data)
+            except TypeError:
+                raise ValueError('This field contains invalid JSON')
 
 class DataForm(FlaskForm):
     age = IntegerField(u'Age', validators=[InputRequired(), NumberRange(18,100)], render_kw={'um': 'years'})
@@ -32,3 +55,8 @@ class DataForm(FlaskForm):
     
     submit = SubmitField(u'Start test')
 
+class CalibrateForm(FlaskForm):
+    identifier = StringField(widget=HiddenInput())
+    step = IntegerField(widget=HiddenInput(), default=0)
+    image = StringField(widget=HiddenInput(), default='//:0')
+    data = JSONField(widget=HiddenInput())

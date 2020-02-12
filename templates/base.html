@@ -45,27 +45,5 @@
     integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
     crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-<script type="text/javascript">
-
-function block(message) {
-    $('.overlay > .overlay-content > .message').text(message);
-    $('.overlay').addClass('d-flex').removeClass('d-none');
-}
-
-function toast(message, style = 'primary', delay = 1500) {
-    $('.toast').addClass('bg-' + style);
-    $('.toast').toast({
-        delay: delay,
-        autohide: true,
-        animation: true
-    });
-    $('.toast > .toast-body').text(message);
-    $('.toast').toast('show');
-}
-
-function unblock() {
-    $('.overlay').removeClass('d-flex').addClass('d-none');
-}
-
-</script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
 {%- endblock %}
