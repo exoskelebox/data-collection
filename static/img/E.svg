@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="66.480003"
+   height="81.600006"
+   viewBox="201.59062 -14.219995 66.480004 81.600007"
+   preserveAspectRatio="xMidYMid"
+   version="1.1"
+   id="svg29"
+   sodipodi:docname="E.svg"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)">
+  <metadata
+     id="metadata33">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="2560"
+     inkscape:window-height="1387"
+     id="namedview31"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="1.3225735"
+     inkscape:cx="31.904062"
+     inkscape:cy="42.800007"
+     inkscape:window-x="1432"
+     inkscape:window-y="535"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg29" />
+  <defs
+     id="defs19">
+    <filter
+       id="editing-vr">
+      <feFlood
+         flood-color="#f00"
+         flood-opacity="0.7"
+         result="c1"
+         id="feFlood2" />
+      <feFlood
+         flood-color="#00f"
+         flood-opacity="0.7"
+         result="c3"
+         id="feFlood4" />
+      <feComposite
+         operator="in"
+         in="c1"
+         in2="SourceAlpha"
+         result="text-c1"
+         id="feComposite6" />
+      <feComposite
+         operator="in"
+         in="c3"
+         in2="SourceAlpha"
+         result="text-c3"
+         id="feComposite8" />
+      <feOffset
+         in="text-c1"
+         dx="-5"
+         dy="-5"
+         result="text1"
+         id="feOffset10" />
+      <feOffset
+         in="text-c3"
+         dx="5"
+         dy="5"
+         result="text3"
+         id="feOffset12" />
+      <feBlend
+         in="SourceGraphic"
+         in2="text1"
+         mode="multiply"
+         result="text4"
+         id="feBlend14" />
+      <feBlend
+         in="text4"
+         in2="text3"
+         mode="multiply"
+         id="feBlend16" />
+    </filter>
+  </defs>
+  <g
+     id="g25"
+     style="filter:url(#editing-vr)"
+     transform="translate(-16.505312,-50.419995)">
+    <g
+       transform="translate(222.83594,109)"
+       id="g23">
+      <path
+         d="m 44.4,-15.4 v 0 0 q 1.9,2.4 1.9,6.3 v 0 0 q 0,5.4 -4,8.25 v 0 0 Q 38.3,2 32,2 V 2 2 Q 28.4,2 22.9,1.2 v 0 0 Q 12.1,-0.5 8.8,-0.5 v 0 0 q -3.3,0 -4.6,0.15 v 0 0 Q 2.9,-0.2 0.8,0 v 0 l 12.3,-66 h 43.1 v 0 q 0,6.1 -2.95,9.3 v 0 0 q -2.95,3.2 -8.75,3.2 v 0 0 q -5.8,0 -11.7,-2.7 v 0 l -3.1,17.5 h 17.8 v 0 q 0,5.3 -2.6,8.25 v 0 0 q -2.6,2.95 -6.95,2.95 v 0 0 q -4.35,0 -7.05,-1 v 0 0 q -2.7,-1 -3,-1.3 v 0 l -3.6,18.9 v 0 q 2.4,0.3 6.9,0.3 v 0 0 q 7.7,0 13.2,-4.8 z"
+         id="path21"
+         inkscape:connector-curvature="0"
+         style="fill:#444444" />
+    </g>
+  </g>
+  <style
+     id="style27">text {
+  font-size: 64px;
+  font-family: Arial Black;
+  dominant-baseline: central;
+  text-anchor: middle;
+}</style>
+</svg>

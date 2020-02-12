@@ -1,27 +1,50 @@
-{# This simple template derives from ``base.html``. See ``base.html`` for
-  more information about template inheritance. #}
 {%- extends "base.html" %}
 
-{# Loads some of the macros included with Flask-Bootstrap. We are using the
-  utils module here to automatically render Flask's flashed messages in a
-  bootstrap friendly manner #}
-{#% import "bootstrap/utils.html" as utils %#}
 
-
-{# Inside the ``content`` is where you should place most of your own stuff.
-  This will keep scripts at the page end and a navbar you add on later
-  intact. #}
 {% block content %}
-<div class="container">
+<div class="container mt-5">
 
-  <div class="jumbotron">
-    <h1>Welcome to Flask-Bootstrap</h1>
-    <p>This example application demonstrates some (but not all!) of the
-      features of <a href="http://pythonhosted.org/Flask-Bootstrap">
-        Flask-Bootstrap</a>.</p>
-    <p>
-      <a class="btn btn-lg btn-default" role="button" href="http://pythonhosted.org/Flask-Bootstrap">Show docs</a>
-    </p>
+  <div class="page-header" id="banner">
+    <div class="row">
+      <div class="col-lg-10 col-md-9">
+        <h1>Want to help build better exoskeletons in the future?</h1>
+        <p class="lead">We are a research group at Aalborg University attempting to break new ground in the field of gesture recognition, and we need your data to do so!</p>
+        <button type="button" class="btn btn-primary btn-lg btn-block">Get started</button>
+      </div>
+      <div class="col-lg-2 col-md-3 d-sm-none d-md-block">
+        <img src="{{ url_for('static', filename='img/aau.png') }}" class="d-inline-block align-top" alt="">
+      </div>
+    </div>
   </div>
+
+  <div class="mt-5" id="plan">
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="page-header">
+          <h1>We care about your privacy</h1>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="row" style="text-align: justify">
+      <div class="col-lg-4 col-md-6">
+        <p class="lead">
+          We will collect data such as your age, gender, fitness as well as
+          record your arm / wrist while you do different gestures. That is to say, 
+          we will not collect any personally identifiable information (PII) such as your name etc.
+        </p>
+      </div>
+      <div class="col-lg-4 col-md-6">
+        <p class="lead">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean et ullamcorper enim. Interdum et malesuada fames ac ante ipsum primis in faucibus. Sed posuere, nulla eget vehicula aliquet, massa mi semper tortor, ullamcorper finibus orci massa nec odio. Sed hendrerit ipsum id leo faucibus, nec dapibus felis suscipit. Pellentesque dictum tortor in volutpat dapibus. In eros ligula, consectetur fringilla diam vel, vulputate aliquam est. In hac habitasse platea dictumst. In dignissim ipsum mi, a convallis massa ullamcorper ac.
+        </p>
+      </div>
+      <div class="col-lg-4 col-md-6">
+        <p class="lead">
+          Etiam gravida justo massa, eget volutpat est porta id. Praesent iaculis blandit iaculis. Vestibulum eget ligula in nibh mollis placerat at luctus est. Sed vel convallis mauris. Quisque non aliquam felis. Cras ultrices quam quis nisi efficitur, a fermentum quam tristique. Aenean eros velit, fermentum et vulputate sed, fringilla porttitor metus. Nam commodo pulvinar egestas. Vivamus ut mauris viverra, malesuada erat eget, pellentesque nisi. Vivamus commodo pellentesque euismod. Sed varius accumsan sem sit amet molestie.
+        </p>
+      </div>
+    </div>
 </div>
 {%- endblock %}

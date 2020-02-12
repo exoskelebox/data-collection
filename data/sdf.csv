@@ -22,3 +22,9 @@ id,user_id,gesture,reading_1,reading_2,timestamp
 8e528833-4085-42a3-ab48-660f1405071f,sdf,/static/calibrations/calibration_open.jpg,30,40,234234
 id,user_id,gesture,reading_1,reading_2,timestamp
 8e528833-4085-42a3-ab48-660f1405071f,sdf,/static/calibrations/calibration_open.jpg,23,45,234234
+id,user_id,gesture,reading_1,reading_2,timestamp
+233a661e-544a-4372-93a0-00c96eb5c805,sdf,/static/calibrations/calibration_closed.jpg,50,30,1242134
+id,user_id,gesture,reading_1,reading_2,timestamp
+233a661e-544a-4372-93a0-00c96eb5c805,sdf,/static/calibrations/calibration_closed.jpg,30,40,234234
+id,user_id,gesture,reading_1,reading_2,timestamp
+233a661e-544a-4372-93a0-00c96eb5c805,sdf,/static/calibrations/calibration_closed.jpg,23,45,234234

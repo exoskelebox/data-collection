@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, flash, escape, redirect, url_for, request, send_from_directory
 import flask.json as json
 from flask import current_app as app
-from .forms import DataForm, CalibrateForm
-from .filters import is_hidden_field, is_submit_field
+from forms import DataForm, CalibrateForm
+from filters import is_hidden_field, is_submit_field
 import time
 import os
 import random
@@ -20,10 +20,6 @@ def ensure_folder_exists(folder):
         os.mkdir(folder)
     elif not os.path.isdir(folder):
         raise FileExistsError()
-
-def ensure_deleted(path):
-    
-
 
 @frontend.route('/')
 def index():
