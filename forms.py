@@ -1,7 +1,7 @@
 import json
 from flask_wtf import FlaskForm
 from wtforms.widgets import HiddenInput, TextInput
-from wtforms.fields import SelectField, IntegerField, SubmitField, StringField, Field
+from wtforms.fields import SelectField, IntegerField, SubmitField, StringField, Field, HiddenField
 from wtforms.validators import NumberRange, InputRequired
 
 class JSONField(Field):
@@ -56,7 +56,10 @@ class DataForm(FlaskForm):
     submit = SubmitField(u'Start test')
 
 class CalibrateForm(FlaskForm):
-    identifier = StringField(widget=HiddenInput())
-    step = IntegerField(widget=HiddenInput(), default=0)
-    image = StringField(widget=HiddenInput(), default='//:0')
+    image = HiddenField(default='//:0')
+    data = JSONField(widget=HiddenInput())
+
+class TestForm(FlaskForm):
+    identifier = HiddenField()
+    image = HiddenField(default='//:0')
     data = JSONField(widget=HiddenInput())

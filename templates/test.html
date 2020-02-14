@@ -2,26 +2,29 @@
 
 {% block content %}
 
+<div class="container mt-3">
+    <form action="" method="POST" novalidate>
+        {{ form.hidden_tag() }}
 
-<img id="image" src="//:0"
-    class="img-fluid img-thumbnail mx-auto d-block mb-2" alt="Responsive image">
+        <img id="image" src="{{ form.image.data }}" class="img-fluid img-thumbnail mx-auto d-block mb-2" alt="Responsive image">
 
-<p id="repetition" class="lead"></p>
-<p id="test" class="lead"></p>
+        <p id="repetition" class="lead">{{ test }}</p>
+        <p id="test" class="lead"></p>
 
-<p class="text-justify text-info">Position your right hand as shown. When your hand is in position, you can start
-    the test by clicking on the
-    'start' button or pressing any key on the keyboard to start the data collection. When the test starts a progress
-    bar will show up, once the progress bar is filled the test is complete. During the test it is important you keep
-    your hand as still as possible. If you want to redo the previous test, click the 'previous' button. If you do
-    not wish to continue with more tests, you can click the 'end' button.</p>
+        <p class="text-justify text-info">Position your right hand as shown. When your hand is in position, you can start
+            the test by clicking on the
+            'start' button or pressing any key on the keyboard to start the data collection. When the test starts a progress
+            bar will show up, once the progress bar is filled the test is complete. During the test it is important you keep
+            your hand as still as possible. If you want to redo the previous test, click the 'previous' button. If you do
+            not wish to continue with more tests, you can click the 'end' button.</p>
 
-<p class="lead">
-    <a class="btn btn-warning btn-lg" href="#" role="button">Previous</a>
-    <button class="btn btn-danger btn-lg" role="button" onclick="end()">End</button>
-    <button id="start" class="btn btn-primary btn-lg float-right" onclick="start();">Start</button>
-</p>
-
+        <p class="lead">
+            <button type="button" class="btn btn-warning btn-lg mr-4" role="button" onclick="prev()">Previous</a>
+            <button type="button" class="btn btn-danger btn-lg" role="button" onclick="end()">End</button>
+            <button type="button" class="btn btn-primary btn-lg float-right" role="button" onclick="start()">Start</button>
+        </p>
+    </form>
+</div>
 
 {%- endblock %}
 
@@ -29,94 +32,30 @@
 {{ super() }}
 <script type=text/javascript> 
 $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-var calibrations = undefined;
-var curr_cal = undefined;
-var num_cals = undefined;
-var sequence = undefined;
-var curr_rep = undefined;
-var curr_test = undefined;
-var num_tests = undefined;
-var num_tests_rep = undefined;
-var num_reps = 2;
-
-init();
-
-
-function init() {
-    $.getJSON($SCRIPT_ROOT + '/calibrations/sequence', function(data) {
-        curr_cal = 0;
-        num_cals = data.length;
-    });
-
-    $.getJSON($SCRIPT_ROOT + '/gestures/sequence/' + num_reps, function(data) {
-        sequence = data;
-        num_tests = sequence.length;
-        num_tests_rep = num_tests / num_reps;
-        curr_rep = 0;
-        curr_test = 0;
-        next_test();
-    });
-}
-
-
-function next_test() {
-    if (curr_test === num_tests) {
-        return;
-    }
-
-    if (curr_test !== 0 && curr_test % num_tests_rep === 0) {
-        curr_rep += 1;
-    }
-
-    $('#image').attr('src', sequence[curr_test]);
-
-    let curr_rep_display = curr_rep + 1;
-    let curr_test_display = (curr_test % num_tests_rep) + 1;
-    
-    $('#repetition').text('Repetition ' + curr_rep_display.toString() + '/' + num_reps.toString());
-    $('#test').text('Test ' + curr_test_display.toString() + '/' + num_tests_rep.toString());
-
-    curr_test += 1;
-}
 
 function start() {
-    block('collecting data...');
-
+    blockui('collecting data...');
+    
     $.getJSON($SCRIPT_ROOT + '/collector/start', function(data) {
-    }).done(() => {
-        toast('Data collected.', 'success');
-        next_test();
+    }).done((data) => {
+        $('#data').val(JSON.stringify(data));
+        $('form').submit();
     }).fail(() => {
-        toast('Something went wrong...', 'danger');
+        toast('Something went wrong, please try again...', 'danger');
     }).always(() => {
-        unblock();
-    });    
+        unblockui();
+    });  
+
+
+    
 }
 
-function prev_test() {
-    if (curr_test === 0) {
-        return;
-    } else if (curr_test % num_tests_rep === 0) {
-        curr_rep += 1;
-    }
-
-    $('#image').attr('src', sequence[curr_test]);
-
-    let curr_rep_display = curr_rep + 1;
-    let curr_test_display = (curr_test % num_tests_rep) + 1;
-    
-    $('#repetition').text('Repetition ' + curr_rep_display.toString() + '/' + num_reps.toString());
-    $('#test').text('Test ' + curr_test_display.toString() + '/' + num_tests_rep.toString());
-
-    curr_test += 1;
+function prev() {
+    history.back();
 }
 
 function end() {
-    var result = confirm('If you click "OK" the session will terminate and you won\'t be able to return, are you sure you want to stop?');
-
-    if(result) {
-        window.location.href = '/';
-    }
+    window.location.href = '/';
 }
 
 </script> 

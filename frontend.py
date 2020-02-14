@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, flash, escape, redirect, url_for, request, send_from_directory
 import flask.json as json
 from flask import current_app as app
-from forms import DataForm, CalibrateForm
+from forms import DataForm, CalibrateForm, TestForm
 from filters import is_hidden_field, is_submit_field
 import time
 import os
@@ -20,6 +20,7 @@ def ensure_folder_exists(folder):
         os.mkdir(folder)
     elif not os.path.isdir(folder):
         raise FileExistsError()
+
 
 @frontend.route('/')
 def index():
@@ -52,30 +53,33 @@ def data_form():
             w.writeheader()
             w.writerow(row)
 
-        return redirect(url_for('frontend.calibrate', id=row['id']))
+        return redirect(url_for('.calibrate', user_identifier=row['id'], calibration_identifier=str(uuid.uuid4()), step=0))
     return render_template('register.html', form=form)
 
 
-@frontend.route('/calibrate/<user_identifier>', methods=('GET', 'POST'))
-def calibrate(user_identifier):
+@frontend.route('/calibrate/<calibration_identifier>/<user_identifier>/<int:step>', methods=('GET', 'POST'))
+def calibrate(calibration_identifier, user_identifier, step):
     form = CalibrateForm()
-    step = form.step.data
-
-    if step == 0:
-        form.identifier.data = str(uuid.uuid4())
-
-    identifier = form.identifier.data
+    calibration_image_urls = get_calibration_sequence()
     data = form.data.data
     gesture = form.image.data
+
+    # Handle index out of range error
+    if step >= len(calibration_image_urls):
+        return redirect(url_for('.calibrate', user_identifier=user_identifier, calibration_identifier=calibration_identifier, step=len(calibration_image_urls) - 1))
+
+    # TODO: remove data with matching id, user_id && gesture from database
 
     if form.validate_on_submit():
         ensure_folder_exists(data_folder)
 
         row = {
-            'id': identifier,
+            'id': calibration_identifier,
             'user_id': user_identifier,
             'gesture': gesture
         }
+
+        # TODO: insert data into database
 
         with open(f'{data_folder}/{user_identifier}.csv', 'a+') as f:
             for reading_1, reading_2, timestamp in data:
@@ -87,11 +91,55 @@ def calibrate(user_identifier):
                 w.writeheader()
                 w.writerow(row)
 
-        form.step.data += 1
+        if step == len(calibration_image_urls) - 1:
+            return redirect(url_for('.test', test_identifier=str(uuid.uuid4()), calibration_identifier=calibration_identifier, step=0))
+        else:
+            return redirect(url_for('.calibrate', user_identifier=user_identifier, calibration_identifier=calibration_identifier, step=step + 1))
 
-    step = form.step.data
-    calibration_image_urls = get_calibration_sequence()
     form.image.data = calibration_image_urls[step]
+    form.data.data = None
+    return render_template('calibrate.html', form=form)
+
+
+@frontend.route('/test/<test_identifier>/<calibration_identifier>/<int:step>', methods=('GET', 'POST'))
+def test(test_identifier, calibration_identifier, step):
+    form = TestForm()
+    test_image_urls = get_gesture_sequence()
+    data = form.data.data
+    gesture = form.image.data
+
+    # Handle index out of range error
+    if step >= len(test_image_urls):
+        return redirect(url_for('.test', calibration_identifier=calibration_identifier, step=len(test_image_urls) - 1))
+
+    # TODO: remove data with matching id, cal_id && gesture from database
+
+    if form.validate_on_submit():
+        ensure_folder_exists(data_folder)
+
+        row = {
+            'id': test_identifier,
+            'cal_id': calibration_identifier,
+            'gesture': gesture
+        }
+
+        with open(f'{data_folder}/{calibration_identifier}.csv', 'a+') as f:
+            # TODO: insert data into database
+            for reading_1, reading_2, timestamp in data:
+                row['reading_1'] = reading_1
+                row['reading_2'] = reading_2
+                row['timestamp'] = timestamp
+
+                w = csv.DictWriter(f, row.keys())
+                w.writeheader()
+                w.writerow(row)
+
+        if step == len(test_image_urls):
+            return redirect(url_for('.test', calibration_identifier=calibration_identifier, step=0))
+        else:
+            return redirect(url_for('.test', calibration_identifier=calibration_identifier, step=step + 1))
+
+    form.image.data = test_image_urls[step]
     form.data.data = None
     return render_template('calibrate.html', form=form)
 
@@ -109,13 +157,6 @@ def get_gesture_sequence(rep=10, seed=42):
         result = result + sequence
 
     return json.jsonify(list(map(lambda x: app.static_url_path + '/gestures/' + x, result)))
-
-
-""" @frontend.route('/calibrations/sequence')
-def get_calibration_sequence():
-    calibrations = os.listdir(os.path.join(app.static_folder, 'calibrations'))
-    return jsonify(list(map(lambda x: app.static_url_path + '/calibrations/' + x, calibrations)))
- """
 
 
 def get_calibration_sequence():

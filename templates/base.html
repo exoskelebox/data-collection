@@ -14,7 +14,7 @@
   integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
   crossorigin="anonymous"></script>
 
-{% if debug %}
+{% if not debug %}
     <script type="text/javascript" src="http://livejs.com/live.js"></script>
 {% endif %}
 
@@ -29,10 +29,12 @@
 <header>
     {% block header %}
         <nav class="navbar navbar-light bg-light">
-            <a class="navbar-brand" href="#">
-                <img src="{{ url_for('static', filename='img/e.svg') }}" width="30" height="30" class="d-inline-block align-top" alt="">
-                Exoskelebox
-            </a>
+            <div class="container">
+                <a class="navbar-brand" href="/">
+                    <img src="{{ url_for('static', filename='img/e.svg') }}" width="30" height="30" class="d-inline-block align-top" alt="">
+                    Exoskelebox
+                </a>
+            </div>
         </nav>
     {% endblock %}
 </header>

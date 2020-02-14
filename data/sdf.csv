@@ -28,3 +28,15 @@ id,user_id,gesture,reading_1,reading_2,timestamp
 233a661e-544a-4372-93a0-00c96eb5c805,sdf,/static/calibrations/calibration_closed.jpg,30,40,234234
 id,user_id,gesture,reading_1,reading_2,timestamp
 233a661e-544a-4372-93a0-00c96eb5c805,sdf,/static/calibrations/calibration_closed.jpg,23,45,234234
+id,user_id,gesture,reading_1,reading_2,timestamp
+efc5c6e9-8242-4c36-a5ee-7d536aab5a58,sdf,/static/calibrations/calibration_closed.jpg,50,30,1242134
+id,user_id,gesture,reading_1,reading_2,timestamp
+efc5c6e9-8242-4c36-a5ee-7d536aab5a58,sdf,/static/calibrations/calibration_closed.jpg,30,40,234234
+id,user_id,gesture,reading_1,reading_2,timestamp
+efc5c6e9-8242-4c36-a5ee-7d536aab5a58,sdf,/static/calibrations/calibration_closed.jpg,23,45,234234
+id,user_id,gesture,reading_1,reading_2,timestamp
+b4f6fcb9-ad81-4276-888c-64e252c8c031,sdf,/static/calibrations/calibration_open.jpg,50,30,1242134
+id,user_id,gesture,reading_1,reading_2,timestamp
+b4f6fcb9-ad81-4276-888c-64e252c8c031,sdf,/static/calibrations/calibration_open.jpg,30,40,234234
+id,user_id,gesture,reading_1,reading_2,timestamp
+b4f6fcb9-ad81-4276-888c-64e252c8c031,sdf,/static/calibrations/calibration_open.jpg,23,45,234234
