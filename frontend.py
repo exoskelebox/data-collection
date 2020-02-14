@@ -101,9 +101,10 @@ def calibrate(calibration_identifier, user_identifier, step):
             return redirect(url_for('.calibrate', user_identifier=user_identifier, calibration_identifier=calibration_identifier, step=step + 1))
 
     form.image.data = calibration_image_urls[step]
+    gesture = form.image.data.split('/')[-1].split('.')[0]
     form.data.data = None
     status_text = f'Calibration: {int(step % len(calibration_image_urls)) + 1} / {len(calibration_image_urls)}'
-    return render_template('calibrate.html', form=form, status=status_text)
+    return render_template('calibrate.html', form=form, status=status_text, gesture=gesture)
 
 
 @frontend.route('/test/<test_identifier>/<calibration_identifier>/<int:step>', methods=('GET', 'POST'))
