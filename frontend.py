@@ -31,7 +31,6 @@ def index():
 def done():
     return render_template('complete.html')
 
-
 @frontend.route('/form/', methods=('GET', 'POST'))
 def data_form():
     form = DataForm()

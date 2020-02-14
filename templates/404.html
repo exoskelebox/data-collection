@@ -1,0 +1,13 @@
+{%- extends "base.html" %}
+
+{% block content %}
+<div class="container mt-3">
+    <div class="row justify-content-md-center">
+        <div class="col-lg-8">
+            <a href="/">
+                <img src="{{ url_for('static', filename='img/page_not_found.svg') }}" class="img-fluid" alt="">
+            </a>
+        </div>
+    </div>
+</div>
+{%- endblock %}
