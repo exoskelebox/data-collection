@@ -27,6 +27,10 @@ def ensure_folder_exists(folder):
 def index():
     return render_template('index.html')
 
+@frontend.route('/thank-you')
+def done():
+    return render_template('complete.html')
+
 
 @frontend.route('/form/', methods=('GET', 'POST'))
 def data_form():
@@ -104,7 +108,7 @@ def calibrate(calibration_identifier, user_identifier, step):
 
 
 @frontend.route('/test/<test_identifier>/<calibration_identifier>/<int:step>', methods=('GET', 'POST'))
-def test(test_identifier, calibration_identifier, step, reps=10):
+def test(test_identifier, calibration_identifier, step, reps=5):
     form = TestForm()
     test_image_urls = get_gesture_sequence(reps)
     data = form.data.data
@@ -136,8 +140,8 @@ def test(test_identifier, calibration_identifier, step, reps=10):
                 w.writeheader()
                 w.writerow(row)
 
-        if step == len(test_image_urls):
-            return redirect(url_for('.test', calibration_identifier=calibration_identifier, step=0))
+        if step == len(test_image_urls) - 1:
+            return redirect(url_for('.done'))
         else:
             return redirect(url_for('.test', test_identifier=test_identifier, calibration_identifier=calibration_identifier, step=step + 1))
 
