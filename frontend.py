@@ -72,28 +72,11 @@ def calibrate(calibration_identifier, user_identifier, step):
     if step >= len(calibration_image_urls):
         return redirect(url_for('.calibrate', user_identifier=user_identifier, calibration_identifier=calibration_identifier, step=len(calibration_image_urls) - 1))
 
-    # TODO: remove data with matching id, user_id && gesture from database
+    # TODO: remove existing data if any from database
 
     if form.validate_on_submit():
-        ensure_folder_exists(data_folder)
-
-        row = {
-            'id': calibration_identifier,
-            'user_id': user_identifier,
-            'gesture': gesture
-        }
-
-        # TODO: insert data into database
-
-        with open(f'{data_folder}/{user_identifier}.csv', 'a+') as f:
-            for reading_1, reading_2, timestamp in data:
-                row['reading_1'] = reading_1
-                row['reading_2'] = reading_2
-                row['timestamp'] = timestamp
-
-                w = csv.DictWriter(f, row.keys())
-                w.writeheader()
-                w.writerow(row)
+        # TODO: write to database
+        print(data)
 
         if step == len(calibration_image_urls) - 1:
             return redirect(url_for('.test', test_identifier=str(uuid.uuid4()), calibration_identifier=calibration_identifier, step=0))

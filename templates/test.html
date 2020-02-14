@@ -36,7 +36,7 @@ $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 function start() {
     blockui('collecting data...');
     
-    $.getJSON($SCRIPT_ROOT + '/collector/start', function(data) {
+    $.getJSON($SCRIPT_ROOT + '/collect/data', function(data) {
     }).done((data) => {
         $('#data').val(JSON.stringify(data));
         $('form').submit();
