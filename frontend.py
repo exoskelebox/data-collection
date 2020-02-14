@@ -8,6 +8,7 @@ import os
 import random
 import csv
 import uuid
+import math
 
 frontend = Blueprint('frontend', __name__)
 data_folder = 'data'
@@ -54,7 +55,7 @@ def data_form():
             w.writerow(row)
 
         return redirect(url_for('.calibrate', user_identifier=row['id'], calibration_identifier=str(uuid.uuid4()), step=0))
-    return render_template('register.html', form=form)
+    return render_template('form.html', form=form)
 
 
 @frontend.route('/calibrate/<calibration_identifier>/<user_identifier>/<int:step>', methods=('GET', 'POST'))
@@ -98,13 +99,14 @@ def calibrate(calibration_identifier, user_identifier, step):
 
     form.image.data = calibration_image_urls[step]
     form.data.data = None
-    return render_template('calibrate.html', form=form)
+    status_text = f'Calibration: {int(step % len(calibration_image_urls)) + 1} / {len(calibration_image_urls)}'
+    return render_template('calibrate.html', form=form, status=status_text)
 
 
 @frontend.route('/test/<test_identifier>/<calibration_identifier>/<int:step>', methods=('GET', 'POST'))
-def test(test_identifier, calibration_identifier, step):
+def test(test_identifier, calibration_identifier, step, reps=10):
     form = TestForm()
-    test_image_urls = get_gesture_sequence()
+    test_image_urls = get_gesture_sequence(reps)
     data = form.data.data
     gesture = form.image.data
 
@@ -137,14 +139,16 @@ def test(test_identifier, calibration_identifier, step):
         if step == len(test_image_urls):
             return redirect(url_for('.test', calibration_identifier=calibration_identifier, step=0))
         else:
-            return redirect(url_for('.test', calibration_identifier=calibration_identifier, step=step + 1))
+            return redirect(url_for('.test', test_identifier=test_identifier, calibration_identifier=calibration_identifier, step=step + 1))
 
     form.image.data = test_image_urls[step]
     form.data.data = None
-    return render_template('calibrate.html', form=form)
+    tests_per_rep = int(len(test_image_urls) / reps)
+    status_text = f'''Test: {int(step % tests_per_rep) + 1} / {tests_per_rep}
+        Rep: {math.ceil((step + 1) / tests_per_rep)} / {reps}'''
+    return render_template('test.html', form=form, status=status_text)
 
 
-@frontend.route('/gestures/sequence/<int:rep>')
 def get_gesture_sequence(rep=10, seed=42):
     gestures = os.listdir(os.path.join(app.static_folder, 'gestures'))
     sequences = [[gestures[(i+j) % len(gestures)]
@@ -156,7 +160,7 @@ def get_gesture_sequence(rep=10, seed=42):
         random.shuffle(sequence)
         result = result + sequence
 
-    return json.jsonify(list(map(lambda x: app.static_url_path + '/gestures/' + x, result)))
+    return list(map(lambda x: app.static_url_path + '/gestures/' + x, result))
 
 
 def get_calibration_sequence():

@@ -74,3 +74,5 @@ id,age,gender,phys_exercise,wrist_function,handedness,wrist_circumference,arm_ci
 a0678d7a-cfb4-465a-9070-32e5b13f8bb1,18,m,1,n,r,18,28
 id,age,gender,phys_exercise,wrist_function,handedness,wrist_circumference,arm_circumference
 8dc4b18e-2aa0-45c9-a2a5-efc8918a1745,18,m,1,n,r,18,28
+id,age,gender,phys_exercise,wrist_function,handedness,wrist_circumference,arm_circumference
+b6ec3385-e065-489d-8af2-e7918645da32,18,m,1,n,r,18,28
