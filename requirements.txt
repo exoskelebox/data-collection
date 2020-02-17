@@ -14,3 +14,4 @@ typed-ast==1.4.1
 Werkzeug==0.16.1
 wrapt==1.11.2
 WTForms==2.2.1
+psycopg2==2.8.4
