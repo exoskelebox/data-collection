@@ -1,8 +1,10 @@
 from serial import Serial
 import array
-from datetime import datetime
+import datetime
 import sys
 import time
+from data_collection import biox_devices
+import timeit
 
 
 
@@ -102,7 +104,7 @@ def calibrate_sensor(port, num_to_max=2):
             serial.close()
 
 
-def collect_sensor_data(ports):
+def old_collect_sensor_data(ports, data_stream):
     """Collects 10 data readings from the given sensor ports and returns lists for each wristband values and timestamp.
 
     >>> collect_sensor_data([]) is None
@@ -115,34 +117,92 @@ def collect_sensor_data(ports):
     repetition = 10
     # How many readings for each sensor do we want to receive from the device
     data_size = sensors_amount * repetition
-    data_com3 = []
-    data_com4 = []
-    t = datetime.utcnow().timestamp()
-    time = [t for _ in range(repetition)]
+    wrist_data = []
+    forearm_data = []
+
+    t = datetime.datetime.utcnow()
+
 
     for port in ports:
-        port.write('S'.encode())
-        data_stream = array.array("B")
-        data_stream.fromfile(port, data_size)
+        #port.write('S'.encode())
+        stream = array.array("B")
+        #data_stream.fromfile(port, data_size)
         i = 1
-        l = len(data_stream)
-        j = 1
-        while i <= l:
-            j += sensors_amount
-            temp = []
-            while i < j:
-                temp.append(data_stream[l - i])
-                i += 1
-            # We assume that the device COM4 has the arm band with 7 sensors.
+        temp = []
 
-            if port.name == "COM4":
-                # Sensor device with 7 FSR
-                # Pop index 1 as we only have 7 FSR and that value is not doing anything.
-                temp.pop(6)
-                data_com4.append(temp)
-            elif port.name == "COM3":
-                # Sensor device with 8 FSR
-                data_com3.append(temp)
-            else:
-                sys.stdout.write('ERROR: Collect_sensor_data: unknown device')
-    return data_com4, data_com3, time
+        while i < len(data_stream):
+            j = i + sensors_amount
+            while i < j:
+                i += 1
+                temp.append(data_stream[len(data_stream) - i])
+            
+        if port == "COM4":
+            # Sensor device with 7 FSR
+            # Pop index 1 as we only have 7 FSR and that value is not doing anything.
+            temp.pop(6)
+            wrist_data = temp
+        elif port == "COM3":
+            # Sensor device with 8 FSR
+            forearm_data = temp
+        else:
+            sys.stdout.write('ERROR: Collect_sensor_data: unknown device')
+    return wrist_data, forearm_data, t
+
+
+def collect_sensor_data(ports, data_stream):
+    """Collects 10 data readings from the given sensor ports and returns lists for each wristband values and timestamp.
+
+    >>> collect_sensor_data([]) is None
+    True
+    """
+    if not len(ports) > 0:
+        return None
+
+    sensors_amount = 8
+    repetition = 10
+    # How many readings for each sensor do we want to receive from the device
+    data_size = sensors_amount * repetition
+    wrist_data = []
+    forearm_data = []
+
+    t = time.time()
+
+    for port in ports:
+        #port.write('S'.encode())
+        stream = array.array("B")
+        #data_stream.fromfile(port, data_size)
+
+        temp = data_stream[:9]
+        
+        if port == "COM4":
+            # Sensor device with 7 FSR
+            # Pop index 1 as we only have 7 FSR and that value is not doing anything.
+            temp.pop(6)
+            wrist_data = temp
+        elif port == "COM3":
+            # Sensor device with 8 FSR
+            forearm_data = temp
+        else:
+            sys.stdout.write('ERROR: Collect_sensor_data: unknown device')
+    return wrist_data, forearm_data, t
+
+if __name__ == "__main__":
+    ports = ['COM3', 'COM4']
+    
+    la = [
+        'collect_sensor_data(ports, data)',
+        'old_collect_sensor_data(ports, data)',
+    ]
+
+    n = 10**6
+
+    for l in la:
+        break
+        elapsed = timeit.timeit(
+            l, 
+            setup='import array, time, datetime, random;' 
+                'from __main__ import collect_sensor_data, old_collect_sensor_data;'
+                'data = array.array("B", [random.randint(5, 155) for _ in range(80)]);'
+                'ports = ["COM3", "COM4"];', 
+            number=n)
+        print(f"{l:30}: {elapsed:20}s = 1M * {(elapsed/n)*1000000}us ")
