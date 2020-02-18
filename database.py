@@ -1,5 +1,7 @@
 import psycopg2
 from configparser import ConfigParser
+import random
+import time
 
 
 def config(filename='database.ini', section='postgresql'):
@@ -124,7 +126,6 @@ def insert_subject(subject):
         # create a new cursor
         cur = conn.cursor()
         # execute the INSERT statement
-        print(sql.format(subject))
         cur.execute(sql.format(subject))
         # get the generated id back
         subject_id = cur.fetchone()[0]
@@ -132,7 +133,8 @@ def insert_subject(subject):
         conn.commit()
         # close communication with the database
         cur.close()
-        print("Inserted {0} at subject_id".format(subject))
+        print("Inserted {0} for subject {1}".format(subject, subject_id))
+
     except (Exception, psycopg2.DatabaseError) as error:
         raise error
     finally:
@@ -141,16 +143,125 @@ def insert_subject(subject):
  
     return subject_id
 
-def insert_dummy_subject():
+def insert_calibration(calibration):
+    """ insert a new calibration into the calibration table """
+    sql = """INSERT INTO calibration(subject_id, calibration_gesture, calibration_iterations, calibration_values)
+             VALUES{0};"""
+    conn = None
+    try:
+        # read database configuration
+        params = config()
+        # connect to the PostgreSQL database
+        conn = psycopg2.connect(**params)
+        # create a new cursor
+        cur = conn.cursor()
+        # execute the INSERT statement
+        cur.execute(sql.format(calibration).replace('[', "'{").replace(']', "}'"))
+        # commit the changes to the database
+        conn.commit()
+        # close communication with the database
+        cur.close()
+
+        print("Inserted {0} into calibration".format(calibration))
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+def insert_data(data):
+    """ insert new data into the data table"""
+    sql = """INSERT INTO data(subject_id, gesture, repetition, reading_count, timestamp, readings)
+             VALUES{0};"""
+    conn = None
+    try:
+        # read database configuration
+        params = config()
+        # connect to the PostgreSQL database
+        conn = psycopg2.connect(**params)
+        # create a new cursor
+        cur = conn.cursor()
+        # execute the INSERT statement
+        cur.execute(sql.format(data).replace('[', "'{").replace(']', "}'"))
+        # commit the changes to the database
+        conn.commit()
+        # close communication with the database
+        cur.close()
+        print("Inserted {0} into data".format(data))
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+ 
+def _insert_dummy_subject():
     subject_gender = 'm'
-    subject_age = 28
+    subject_age = 100
     subject_fitness = 1 
     subject_handedness = 'r'
     subject_impairment = 'n'
     subject_wrist_circumference = 20 
     subject_forearm_circumference = 29
-    insert_subject(subject_gender, subject_age, subject_fitness, subject_handedness, subject_impairment, subject_wrist_circumference, subject_forearm_circumference)
-    print('dummy subject inserted')
+
+    sid = insert_subject((subject_gender, subject_age, subject_fitness, subject_handedness, subject_impairment, subject_wrist_circumference, subject_forearm_circumference,))
+    return sid
+
+def _insert_dummy_data(sid):
+    subject_id = sid
+    gesture = "dummy gesture" 
+    repetition = 1
+    reading_count = 1
+    timestamp = psycopg2.TimeFromTicks(time.time())
+
+    readings = [random.randint(5, 155) for _ in range(15)]
+
+    insert_data((subject_id, gesture, repetition, reading_count, timestamp, readings,))
+
+def _insert_dummy_calibration(sid):
+    subject_id = sid
+    for i in range(2):
+        calibration_iterations = random.randint(0, 125)
+        calibration_gesture = "dummy gesture %i" % (i+1)
+        calibration_values = [random.randint(5, 155) for _ in range(8-i)]
+        print(f'{(subject_id, calibration_gesture, calibration_iterations, calibration_values,)}')
+
+        calibration_values = str(calibration_values).replace('[', '{').replace(']', '}')
+        print(f'{(subject_id, calibration_gesture, calibration_iterations, calibration_values,)}')
+        
+        insert_calibration((subject_id, calibration_gesture, calibration_iterations, calibration_values,))
+
+def get_all(table):
+    """ query data from the subjects table """
+    conn = None
+    try:
+        params = config()
+        conn = psycopg2.connect(**params)
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM %s" % table)
+        print("The number of entries: ", cur.rowcount)
+        row = cur.fetchone()
+ 
+        while row is not None:
+            print(row)
+            row = cur.fetchone()
+ 
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def insert_dummies():
+    sid =_insert_dummy_subject()
+    print(f"sid = {sid}")
+    _insert_dummy_calibration(sid)
+    _insert_dummy_data(sid)
 
 if __name__ == '__main__':
-    setup()
+    insert_dummies()
+    get_all('subjects')
+    get_all('calibration')
+    get_all('data')
+    print('done')
