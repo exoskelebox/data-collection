@@ -9,6 +9,7 @@ import random
 import csv
 import uuid
 import math
+import database
 
 frontend = Blueprint('frontend', __name__)
 data_folder = 'data'
@@ -37,32 +38,23 @@ def data_form():
 
     if form.validate_on_submit():
 
-        row = {}
+        # construct subject tuple
+        subject = tuple(field.data for field in form if not (is_hidden_field(field) or is_submit_field(field)))
+        # attempt to insert into database
+        try:
+            user_id = database.insert_subject(subject)
+        except Exception as identifier:
+            print(identifier)
+            flash('Could not insert into database, please check the fields and try again.', 'danger')
+        else:
+            return redirect(url_for('.calibrate', user_identifier=user_id, step=0))
 
-        # Add a row identifier for pairing with calibration and test data
-        row['id'] = str(uuid.uuid4())
-
-        # Add the form data to the row
-        for field in form:
-            if is_hidden_field(field) or is_submit_field(field):
-                continue
-            row[field.name] = field.data
-
-        # Ensure the data folder exists before we attempt to save data
-        ensure_folder_exists(data_folder)
-
-        # Save the form data dictionary to a csv file in the data folder
-        with open(f'{data_folder}/userdata.csv', 'a+') as f:
-            w = csv.DictWriter(f, row.keys())
-            w.writeheader()
-            w.writerow(row)
-
-        return redirect(url_for('.calibrate', user_identifier=row['id'], calibration_identifier=str(uuid.uuid4()), step=0))
+        
     return render_template('form.html', form=form)
 
 
-@frontend.route('/calibrate/<calibration_identifier>/<user_identifier>/<int:step>', methods=('GET', 'POST'))
-def calibrate(calibration_identifier, user_identifier, step):
+@frontend.route('/calibrate/<int:user_id>/<int:step>', methods=('GET', 'POST'))
+def calibrate(user_id, step):
     form = CalibrateForm()
     calibration_image_urls = get_calibration_sequence()
     data = form.data.data
@@ -70,7 +62,7 @@ def calibrate(calibration_identifier, user_identifier, step):
 
     # Handle index out of range error
     if step >= len(calibration_image_urls):
-        return redirect(url_for('.calibrate', user_identifier=user_identifier, calibration_identifier=calibration_identifier, step=len(calibration_image_urls) - 1))
+        return redirect(url_for('.calibrate', user_id=user_id, step=len(calibration_image_urls) - 1))
 
     # TODO: remove existing data if any from database
 
@@ -79,9 +71,9 @@ def calibrate(calibration_identifier, user_identifier, step):
         print(data)
 
         if step == len(calibration_image_urls) - 1:
-            return redirect(url_for('.test', test_identifier=str(uuid.uuid4()), calibration_identifier=calibration_identifier, step=0))
+            return redirect(url_for('.test', test_identifier=str(uuid.uuid4()), step=0))
         else:
-            return redirect(url_for('.calibrate', user_identifier=user_identifier, calibration_identifier=calibration_identifier, step=step + 1))
+            return redirect(url_for('.calibrate', user_id=user_id, step=step + 1))
 
     form.image.data = calibration_image_urls[step]
     gesture = form.image.data.split('/')[-1].split('.')[0]

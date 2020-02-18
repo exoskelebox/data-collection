@@ -4,6 +4,10 @@ html, body {
     height: 100%;
 }
 
+body {
+    padding-top: 80px;
+}
+
 .overlay {
     position: fixed;
     top: 0;

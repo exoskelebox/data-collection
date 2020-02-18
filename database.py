@@ -27,7 +27,7 @@ def setup():
             subject_id SERIAL PRIMARY KEY,
             subject_gender CHAR(1) NOT NULL CHECK (subject_gender IN ('m','f')),
             subject_age SMALLINT NOT NULL CHECK (subject_age >= 16 AND subject_age <= 100),
-            subject_fitness SMALLINT NOT NULL CHECK (subject_age >= 0 AND subject_age <= 7),
+            subject_fitness SMALLINT NOT NULL CHECK (subject_fitness >= 0 AND subject_fitness <= 7),
             subject_handedness CHAR(1) NOT NULL CHECK (subject_handedness IN ('r','l')),
             subject_impairment BOOLEAN NOT NULL,
             subject_wrist_circumference REAL NOT NULL CHECK (subject_wrist_circumference >= 10 AND subject_wrist_circumference <= 25),
@@ -110,10 +110,10 @@ def connect():
             print('Database connection closed.')
  
 
-def insert_subject(subject_gender, subject_age, subject_fitness, subject_handedness, subject_impairment, subject_wrist_circumference, subject_forearm_circumference):
+def insert_subject(subject):
     """ insert a new subject into the subjects table """
-    sql = """INSERT INTO subjects(subject_gender, subject_age, subject_fitness, subject_handedness, subject_impairment, subject_wrist_circumference, subject_forearm_circumference)
-             VALUES(%s) RETURNING subject_id;"""
+    sql = """INSERT INTO subjects(subject_age, subject_gender, subject_fitness, subject_impairment, subject_handedness, subject_wrist_circumference, subject_forearm_circumference)
+             VALUES{0} RETURNING subject_id;"""
     conn = None
     subject_id = None
     try:
@@ -124,16 +124,17 @@ def insert_subject(subject_gender, subject_age, subject_fitness, subject_handedn
         # create a new cursor
         cur = conn.cursor()
         # execute the INSERT statement
-        cur.execute(sql, (subject_gender, subject_age, subject_fitness, subject_handedness, subject_impairment, subject_wrist_circumference, subject_forearm_circumference,))
+        print(sql.format(subject))
+        cur.execute(sql.format(subject))
         # get the generated id back
         subject_id = cur.fetchone()[0]
         # commit the changes to the database
         conn.commit()
         # close communication with the database
         cur.close()
-        print("Inserted (%s) at subject_id" % (subject_gender, subject_age, subject_fitness, subject_handedness, subject_impairment, subject_wrist_circumference, subject_forearm_circumference,))
+        print("Inserted {0} at subject_id".format(subject))
     except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+        raise error
     finally:
         if conn is not None:
             conn.close()
@@ -152,4 +153,4 @@ def insert_dummy_subject():
     print('dummy subject inserted')
 
 if __name__ == '__main__':
-    insert_dummy_subject()
+    setup()
