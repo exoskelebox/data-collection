@@ -1,7 +1,7 @@
-import psycopg2
+import numpy.random as random
+import datetime
 from configparser import ConfigParser
-import random
-import time
+import psycopg2
 
 
 def config(filename='database.ini', section='postgresql'):
@@ -211,8 +211,7 @@ def _insert_dummy_data(sid):
     gesture = "dummy gesture" 
     repetition = 1
     reading_count = 1
-    timestamp = psycopg2.TimeFromTicks(time.time())
-
+    timestamp = datetime.datetime.utcnow().strftime('%H:%M:%S.%f')
     readings = [random.randint(5, 155) for _ in range(15)]
 
     insert_data((subject_id, gesture, repetition, reading_count, timestamp, readings,))
@@ -225,7 +224,7 @@ def _insert_dummy_calibration(sid):
         calibration_values = [random.randint(5, 155) for _ in range(8-i)]
         print(f'{(subject_id, calibration_gesture, calibration_iterations, calibration_values,)}')
 
-        calibration_values = str(calibration_values).replace('[', '{').replace(']', '}')
+        #calibration_values = str(calibration_values).replace('[', '{').replace(']', '}')
         print(f'{(subject_id, calibration_gesture, calibration_iterations, calibration_values,)}')
         
         insert_calibration((subject_id, calibration_gesture, calibration_iterations, calibration_values,))
