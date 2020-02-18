@@ -9,7 +9,7 @@ import random
 import csv
 import uuid
 import math
-import database
+import database as db
 
 frontend = Blueprint('frontend', __name__)
 data_folder = 'data'
@@ -42,12 +42,11 @@ def data_form():
         subject = tuple(field.data for field in form if not (is_hidden_field(field) or is_submit_field(field)))
         # attempt to insert into database
         try:
-            user_id = database.insert_subject(subject)
+            user_id = db.insert_subject(subject)
         except Exception as identifier:
-            print(identifier)
             flash('Could not insert into database, please check the fields and try again.', 'danger')
         else:
-            return redirect(url_for('.calibrate', user_identifier=user_id, step=0))
+            return redirect(url_for('.calibrate', user_id=user_id, step=0))
 
         
     return render_template('form.html', form=form)
@@ -66,14 +65,25 @@ def calibrate(user_id, step):
 
     # TODO: remove existing data if any from database
 
-    if form.validate_on_submit():
-        # TODO: write to database
-        print(data)
 
-        if step == len(calibration_image_urls) - 1:
-            return redirect(url_for('.test', test_identifier=str(uuid.uuid4()), step=0))
+    if form.validate_on_submit():
+        
+        # construct calibration tuple
+        calibration_values, calibration_iterations = data
+        calibration = user_id, gesture, calibration_values, calibration_iterations
+
+        # attempt to insert into database
+        try:
+            user_id = db.insert_calibration(calibration)
+        except Exception as identifier:
+            flash('Could not insert into database, please check the fields and try again.', 'danger')
         else:
-            return redirect(url_for('.calibrate', user_id=user_id, step=step + 1))
+            if step == len(calibration_image_urls) - 1:
+                return redirect(url_for('.test', test_identifier=str(uuid.uuid4()), step=0))
+            else:
+                return redirect(url_for('.calibrate', user_id=user_id, step=step + 1))
+
+        
 
     form.image.data = calibration_image_urls[step]
     gesture = form.image.data.split('/')[-1].split('.')[0]

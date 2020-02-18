@@ -2,20 +2,23 @@
   * General application functions
   */
 
- function blockui(message) {
+function blockui(message) {
     $('.overlay > .overlay-content > .message').text(message);
     $('.overlay').addClass('d-flex').removeClass('d-none');
 }
 
-function toast(message, style = 'primary', delay = 1500) {
-    $('.toast').addClass('bg-' + style);
-    $('.toast').toast({
-        delay: delay,
-        autohide: true,
-        animation: true
-    });
-    $('.toast > .toast-body').text(message);
-    $('.toast').toast('show');
+function flash(message, category) {
+    $('#flash').append(
+        `<div class="alert alert-${category} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>`);
+}
+
+function clearFlash() {
+    $('#flash').empty();
 }
 
 function unblockui() {

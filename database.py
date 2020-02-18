@@ -145,7 +145,7 @@ def insert_subject(subject):
 
 def insert_calibration(calibration):
     """ insert a new calibration into the calibration table """
-    sql = """INSERT INTO calibration(subject_id, calibration_gesture, calibration_iterations, calibration_values)
+    sql = """INSERT INTO calibration(subject_id, calibration_gesture, calibration_values, calibration_iterations)
              VALUES{0};"""
     conn = None
     try:

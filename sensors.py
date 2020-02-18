@@ -1,16 +1,12 @@
-import serial
+from serial import Serial
 import array
 from datetime import datetime
 import sys
 import time
+from data_collection import biox_devices
 
-
-def find_serial_port(ports):
-    """Finds the ports for both sensors.
-
-    >>> find_serial_port([])
-    []
-    """
+# OBSOLETE
+""" def find_serial_port(ports):
     find_ports = []
     for port in ports:
         try:
@@ -36,7 +32,7 @@ def find_serial_port(ports):
                 print("Device not found")
                 get_Serial.close()
                 i += 1
-    return serial_devices
+    return serial_devices """
 
 
 def reset_sensor_values(ports):
@@ -87,47 +83,52 @@ def test_sensor_calibration(ports, num_to_max=1):
 def calibrate_sensor(port, num_to_max=2):
     sensors_amount = 8
     repetition = 10
-
     data_size = sensors_amount * repetition
-
     threshold = 117
-
     iteration_count = 0
-
     sensor_raw_data = []
 
-    port.write('S'.encode())
-    data_stream = array.array('B')
-    data_stream.fromfile(port, data_size)
-    maxed_sensors = 0
-    while maxed_sensors < num_to_max:
-        # 'S' receives a data reading from the sensor
-        port.write('S'.encode())
+    serial = None
+    try:
+        serial = Serial(port.device, baudrate=250000, bytesize=8, timeout=1)
+        serial.write('S'.encode())
         data_stream = array.array('B')
-        data_stream.fromfile(port, data_size)
-        i = 0
-        while i < len(data_stream):
-            j = i
-            temp = []
+        data_stream.fromfile(serial, data_size)
+        maxed_sensors = 0
+        while maxed_sensors < num_to_max:
+            # 'S' receives a data reading from the sensor
+            serial.write('S'.encode())
+            data_stream = array.array('B')
+            data_stream.fromfile(serial, data_size)
+            i = 0
+            while i < len(data_stream):
+                j = i
+                temp = []
 
-            while j < (i+sensors_amount):
-                j += 1
-                temp.append(data_stream[len(data_stream) - j])
-            i += sensors_amount
-            # Takes only the elements whose value is > threshold
-            maxed_sensors = len([i for i in temp if i > threshold])
+                while j < (i+sensors_amount):
+                    j += 1
+                    temp.append(data_stream[len(data_stream) - j])
+                i += sensors_amount
+                # Takes only the elements whose value is > threshold
+                maxed_sensors = len([i for i in temp if i > threshold])
 
-            if maxed_sensors >= num_to_max:
-                if port.name == "COM4":
-                    temp.pop(1)
-                    sensor_raw_data = temp
-                else:
-                    sensor_raw_data = temp
-                break
-            port.write('I'.encode())
-            time.sleep(0.01)
-            iteration_count += 1
-    return (sensor_raw_data, iteration_count)
+                if maxed_sensors >= num_to_max:
+                    if port.serial_number == biox_devices['wrist']:
+                        temp.pop(1)
+                        sensor_raw_data = temp
+                    else:
+                        sensor_raw_data = temp
+                    break
+                serial.write('I'.encode())
+                time.sleep(0.01)
+                iteration_count += 1
+        return (sensor_raw_data, iteration_count)
+
+    except Exception as ex:
+        raise ex
+    finally:
+        if serial:
+            serial.close()
 
 
 def collect_sensor_data(ports):

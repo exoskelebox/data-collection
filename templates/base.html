@@ -40,9 +40,11 @@
 </header>
 
 <section id="content" class="container">
-    {% for category, message in get_flashed_messages(with_categories=true) %}
-        <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
-    {% endfor %}
+    <div id="flash">
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+            <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+        {% endfor %}
+    </div>
 
     {% block content %}
 

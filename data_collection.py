@@ -2,6 +2,13 @@ import sensors
 import sys
 import time
 import glob
+from serial.tools import list_ports
+from serial import Serial
+
+biox_devices = {
+    'wrist': '4407090',
+    'arm': '4083140'
+}
 
 
 def collect_data():
@@ -19,41 +26,55 @@ def collect_data():
     return sensor_readings
 
 
-def calibrate_sensor(sensor_name):
-    ports = find_sensors()
-    sensors.reset_sensor_values(ports)
-    
+def calibrate_sensor(gesture):
+    ports = get_biox_device_ports()
     calibration = ()
-    
+
     for port in ports:
         # Placeholder
-        if sensor_name == "calibration_closed" and port.name == "COM3":
+        if gesture == "calibration_closed" and port.serial_number == biox_devices['arm']:
             return sensors.calibrate_sensor(port)
-        elif sensor_name == "calibration_open" and port.name == "COM4":
+        elif gesture == "calibration_open" and port.serial_number == biox_devices['wrist']:
             return sensors.calibrate_sensor(port)
-    print(calibration)
 
 
-def check_os():
-    if sys.platform.startswith('win'):
-        ports = ['COM%s' % (i + 1) for i in range(256)]
-    elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-        # this excludes your current terminal "/dev/tty"
-        ports = glob.glob('/dev/tty[A-Za-z]*')
-    elif sys.platform.startswith('darwin'):
-        ports = glob.glob('/dev/tty.*')
-    else:
-        raise EnvironmentError('Unsupported platform')
-
-    return ports
+def get_biox_device_ports() -> list:
+    """Gets the ports associated with a biox device"""
+    return [flush_biox_device(port) for port in list_ports.comports() if is_biox_device(port)]
 
 
-def find_sensors():
-    ports = check_os()
-    sensor_ports = sensors.find_serial_port(ports)
-    return sensor_ports
+def is_biox_device(port) -> bool:
+    """Check if port is associated with a biox device"""
+    serial = None
+    try:
+        serial = Serial(port.device, baudrate=250000, bytesize=8, timeout=1)
+        serial.write('C'.encode())
+        return True if 'A'.encode() in serial.read() else False
+    except Exception as ex:
+        return False
+    finally:
+        if serial:
+            serial.close()
 
 
-# if __name__ == "__main__":
-    # collect_data()
-    # calibrate_sensors("COM4")
+def flush_biox_device(port):
+    """Flush the biox device data"""
+    serial = None
+    try:
+        serial = Serial(port.device, baudrate=250000, bytesize=8, timeout=1)
+        serial.write("R".encode())
+        serial.flush()
+        serial.flushInput()
+        serial.flushOutput()
+        # Without this, the buffer wont flush properly
+        time.sleep(0.1)
+    except Exception as ex:
+        raise ex
+    finally:
+        if serial:
+            serial.close()
+        return port
+
+
+if __name__ == "__main__":
+    print(calibrate_sensor('calibration_open'))

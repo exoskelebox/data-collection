@@ -2,29 +2,27 @@
 
 {% block content %}
 
-<div class="container mt-3">
-    <form action="" method="POST" novalidate>
-        {{ form.hidden_tag() }}
+<form action="" method="POST" novalidate>
+    {{ form.hidden_tag() }}
 
-        <img id="image" src="{{ form.image.data }}" class="img-fluid img-thumbnail mx-auto d-block mb-2" alt="Responsive image">
+    <img id="image" src="{{ form.image.data }}" class="img-fluid img-thumbnail mx-auto d-block mb-2" alt="Responsive image">
 
-        <p id="repetition" class="lead" style="white-space: pre-line;">{{ status }}</p>
-        <p id="test" class="lead"></p>
+    <p id="repetition" class="lead" style="white-space: pre-line;">{{ status }}</p>
+    <p id="test" class="lead"></p>
 
-        <p class="text-justify text-info">Position your right hand as shown. When your hand is in position, you can start
-            the test by clicking on the
-            'start' button or pressing any key on the keyboard to start the data collection. When the test starts an overlay
-            will show up, once the overlay disappears the test is complete. During the test it is important you keep
-            your hand as still as possible. If you want to redo a previous test, click the 'previous' button. If you do
-            not wish to continue with more tests, you can click the 'end' button.</p>
+    <p class="text-justify text-info">Position your right hand as shown. When your hand is in position, you can start
+        the test by clicking on the
+        'start' button or pressing any key on the keyboard to start the data collection. When the test starts an overlay
+        will show up, once the overlay disappears the test is complete. During the test it is important you keep
+        your hand as still as possible. If you want to redo a previous test, click the 'previous' button. If you do
+        not wish to continue with more tests, you can click the 'end' button.</p>
 
-        <p class="lead">
-            <button type="button" class="btn btn-warning btn-lg mr-4" role="button" onclick="prev()">Previous</a>
-            <button type="button" class="btn btn-danger btn-lg" role="button" onclick="end()">End</button>
-            <button type="button" class="btn btn-primary btn-lg float-right" role="button" onclick="start()">Start</button>
-        </p>
-    </form>
-</div>
+    <p class="lead">
+        <button type="button" class="btn btn-warning btn-lg mr-4" role="button" onclick="prev()">Previous</a>
+        <button type="button" class="btn btn-danger btn-lg" role="button" onclick="end()">End</button>
+        <button type="button" class="btn btn-primary btn-lg float-right" role="button" onclick="start()">Start</button>
+    </p>
+</form>
 
 {%- endblock %}
 
@@ -34,6 +32,7 @@
 $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 
 function start() {
+    clearFlash();
     blockui('collecting data...');
     gesture = {{ gesture|tojson|safe }};
     $.getJSON($SCRIPT_ROOT + `/collect/calibration/${gesture}`, function(data) {
@@ -41,7 +40,7 @@ function start() {
         $('#data').val(JSON.stringify(data));
         $('form').submit();
     }).fail(() => {
-        toast('Something went wrong, please try again...', 'danger');
+        flash('Something went wrong, please try again...', 'danger');
     }).always(() => {
         unblockui();
     });  
