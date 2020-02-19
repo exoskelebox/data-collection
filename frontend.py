@@ -74,7 +74,7 @@ def calibrate(user_id, step):
 
         # attempt to insert into database
         try:
-            user_id = db.insert_calibration(calibration)
+            db.insert_calibration(calibration)
         except Exception as identifier:
             flash('Could not insert into database, please check the fields and try again.', 'danger')
         else:
@@ -82,8 +82,6 @@ def calibrate(user_id, step):
                 return redirect(url_for('.test', test_identifier=str(uuid.uuid4()), step=0))
             else:
                 return redirect(url_for('.calibrate', user_id=user_id, step=step + 1))
-
-        
 
     form.image.data = calibration_image_urls[step]
     gesture = form.image.data.split('/')[-1].split('.')[0]

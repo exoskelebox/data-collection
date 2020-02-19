@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, flash, escape, redirect, url_for, request, send_from_directory, json
+from flask import Blueprint, render_template, flash, escape, redirect, url_for, request, send_from_directory, json, current_app
 import os
 from serial import Serial
 from serial.tools import list_ports
@@ -15,7 +15,7 @@ def calibration(gesture, **kwargs):
     
     # settings
     num_sensors = 8
-    offset = num_sensors - int(os.getenv(f'{device_name}:SENSORS', '8'))
+    offset = num_sensors - int(current_app.config.get(f'{device_name}_SENSORS', '8'))
     threshold = kwargs.get('threshold', 117)
     num_to_max = kwargs.get('num_to_max', 2)
 
@@ -26,11 +26,12 @@ def calibration(gesture, **kwargs):
 
     try:
         serial = Serial(port.device, baudrate=250000, bytesize=8, timeout=.01)
-        
+        serial.write('C'.encode())
+        assert 'A'.encode() in serial.read()
+
         while serial.readable():
             serial.write('S'.encode())
             reading = list(serial.readall()[offset:num_sensors])
-            print(reading)
             maxed_sensors = len([i for i in reading if i > threshold])
             
             if maxed_sensors >= num_to_max:
@@ -44,7 +45,9 @@ def calibration(gesture, **kwargs):
         return json.jsonify((reading, iterations))
     finally:
         if (serial):
+            serial.write('D'.encode())
             serial.close()
+            
 
 @collector.route('data/')
 def data():
@@ -53,7 +56,7 @@ def data():
 
 def get_biox_device_port(key) -> ListPortInfo:
     """Gets the port of a biox device based on the serial number associated with key"""
-    serial_number = os.getenv(key.upper())
+    serial_number = str(current_app.config.get(key.upper()))
     port = next(port for port in list_ports.comports() if port.serial_number == serial_number)
     return flush_biox_device(port)
 
@@ -91,9 +94,3 @@ def is_biox_device(port) -> bool:
     finally:
         if serial:
             serial.close()
-
-""" from dotenv import load_dotenv
-
-if __name__ == "__main__":
-    load_dotenv()
-    port = calibration('wrist') """
