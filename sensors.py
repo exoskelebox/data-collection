@@ -3,7 +3,6 @@ import array
 from datetime import datetime
 import sys
 import time
-from data_collection import biox_devices
 
 # OBSOLETE
 """ def find_serial_port(ports):
@@ -114,7 +113,7 @@ def calibrate_sensor(port, num_to_max=2):
 
                 if maxed_sensors >= num_to_max:
                     if port.serial_number == biox_devices['wrist']:
-                        temp.pop(1)
+                        temp.pop(0)
                         sensor_raw_data = temp
                     else:
                         sensor_raw_data = temp
