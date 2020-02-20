@@ -4,34 +4,6 @@ from datetime import datetime
 import sys
 import time
 
-# OBSOLETE
-""" def find_serial_port(ports):
-    find_ports = []
-    for port in ports:
-        try:
-            s = serial.Serial(port)
-            s.close()
-            find_ports.append(port)
-        except (OSError, serial.SerialException):
-            pass
-    i = 0
-    serial_devices = []
-
-    if len(find_ports) != 0:
-        while i < len(find_ports):
-            get_Serial = serial.Serial(
-                find_ports[i], baudrate=250000, bytesize=8)
-            get_Serial.write('C'.encode())
-            Receive_data = get_Serial.read()
-            if 'A'.encode() in Receive_data:
-                print("Device found")
-                serial_devices.append(get_Serial)
-                i += 1
-            else:
-                print("Device not found")
-                get_Serial.close()
-                i += 1
-    return serial_devices """
 
 
 def reset_sensor_values(ports):

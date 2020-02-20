@@ -15,7 +15,7 @@ def calibration(gesture, **kwargs):
     
     # settings
     num_sensors = 8
-    offset = num_sensors - int(current_app.config.get(f'{device_name}_SENSORS', '8'))
+    offset = num_sensors - current_app.config.get(f'{device_name}_SENSORS', 8)
     threshold = kwargs.get('threshold', 117)
     num_to_max = kwargs.get('num_to_max', 2)
 
@@ -66,6 +66,7 @@ def flush_biox_device(port):
     try:
         serial = Serial(port.device, baudrate=250000, bytesize=8, timeout=1)
         serial.write("R".encode())
+        time.sleep(.1)
         serial.flush()
         serial.reset_input_buffer()
         serial.reset_output_buffer()
@@ -93,4 +94,46 @@ def is_biox_device(port) -> bool:
         return False
     finally:
         if serial:
+            serial.close()
+
+if __name__ == "__main__":
+    device_name: str = 'wrist'.upper()
+
+    serial_number = '4407090'
+    port = next(port for port in list_ports.comports() if port.serial_number == serial_number)
+    port = flush_biox_device(port)
+    
+    # settings
+    num_sensors = 8
+    offset = num_sensors - 7
+    threshold = 117
+    num_to_max = 2
+
+    # initialize
+    iterations = 0
+    maxed_sensors = 0
+    serial = None
+
+    try:
+        serial = Serial(port.device, baudrate=250000, bytesize=8, timeout=.01)
+        serial.write('C'.encode())
+        assert 'A'.encode() in serial.read()
+
+        while serial.readable():
+            serial.write('S'.encode())
+            reading = list(serial.readall()[offset:num_sensors])
+            maxed_sensors = len([i for i in reading if i > threshold])
+            print(reading)
+            if maxed_sensors >= num_to_max:
+                continue
+            else:
+                serial.write('I'.encode())
+                iterations += 1
+    except Exception as ex:
+        raise ex
+    else:
+        pass
+    finally:
+        if (serial):
+            serial.write('D'.encode())
             serial.close()
