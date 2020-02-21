@@ -37,9 +37,16 @@ def data_form():
     form = DataForm()
 
     if form.validate_on_submit():
-
         # construct subject tuple
-        subject = tuple(field.data for field in form if not (is_hidden_field(field) or is_submit_field(field)))
+        subject = {
+            'subject_age': form.age, 
+            'subject_gender': form.gender, 
+            'subject_fitness': form.phys_exercise, 
+            'subject_impairment': form.wrist_function, 
+            'subject_handedness': form.handedness, 
+            'subject_wrist_circumference': form.wrist_circumference, 
+            'subject_forearm_circumference': form.arm_circumference,
+        }
         # attempt to insert into database
         try:
             user_id = db.insert_subject(subject)
@@ -70,8 +77,12 @@ def calibrate(user_id, step):
         
         # construct calibration tuple
         calibration_values, calibration_iterations = data
-        calibration = user_id, gesture, calibration_values, calibration_iterations
-
+        calibration = {
+            'subject_id': user_id, 
+            'calibration_gesture': gesture, 
+            'calibration_values': calibration_values, 
+            'calibration_iterations': calibration_iterations
+        }
         # attempt to insert into database
         try:
             db.insert_calibration(calibration)
