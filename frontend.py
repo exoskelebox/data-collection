@@ -113,30 +113,38 @@ def test(test_identifier, calibration_identifier, step, reps=5):
     # Handle index out of range error
     if step >= len(test_image_urls):
         return redirect(url_for('.test', calibration_identifier=calibration_identifier, step=len(test_image_urls) - 1))
-
-    # TODO: remove data with matching id, cal_id && gesture from database
+    
+    tests_per_rep = int(len(test_image_urls) / reps)
+    rep = math.ceil((step + 1) / tests_per_rep)
+    
+    # remove data with matching id, cal_id && gesture from database
+    db.clear_existing_data({
+                'subject_id': test_identifier,
+                'gesture': gesture,
+                'repetition': rep})
 
     if form.validate_on_submit():
-        ensure_folder_exists(data_folder)
+        # insert data into database
+        count = 0
+        for reading_1, reading_2, time in data:
+            readings = reading_1 + reading_2
+            timestamp = time.strftime("%H:%M:%S.{}".format(repr(time.time()).split('.')[1]), time.localtime(time.time()))
 
-        row = {
-            'id': test_identifier,
-            'cal_id': calibration_identifier,
-            'gesture': gesture
-        }
-
-        with open(f'{data_folder}/{calibration_identifier}.csv', 'a+') as f:
-            # TODO: insert data into database
-            for reading, timestamp in data:
-                reading_1, reading_2 = reading
-                row['reading_1'] = reading_1
-                row['reading_2'] = reading_2
-                row['timestamp'] = timestamp
-
-                w = csv.DictWriter(f, row.keys())
-                w.writeheader()
-                w.writerow(row)
-
+            data.append({
+                'subject_id': test_identifier,
+                'gesture': gesture,
+                'repetition': rep,
+                'reading_count': count,
+                'readings': readings,
+                'timestamp': timestamp
+            })
+            count += 1
+            # attempt to insert into database
+        try:
+            db.insert_data_repetition(data)
+        except Exception as identifier:
+            flash('Could not insert into database, please check the fields and try again.', 'danger')
+        
         if step == len(test_image_urls) - 1:
             return redirect(url_for('.done'))
         else:
@@ -144,9 +152,8 @@ def test(test_identifier, calibration_identifier, step, reps=5):
 
     form.image.data = test_image_urls[step]
     form.data.data = None
-    tests_per_rep = int(len(test_image_urls) / reps)
     status_text = f'''Test: {int(step % tests_per_rep) + 1} / {tests_per_rep}
-        Rep: {math.ceil((step + 1) / tests_per_rep)} / {reps}'''
+        Rep: {rep} / {reps}'''
     return render_template('test.html', form=form, status=status_text)
 
 

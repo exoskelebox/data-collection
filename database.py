@@ -1,7 +1,9 @@
 import numpy.random as random
 import datetime
+import time
 from configparser import ConfigParser
 import psycopg2
+from psycopg2.extras import execute_values
 
 SCHEMA = {
     'subjects': """
@@ -24,7 +26,7 @@ SCHEMA = {
         reading_count INTEGER NOT NULL CHECK (reading_count >= 0),
         timestamp TIME (6) NOT NULL,
         readings SMALLINT[] NOT NULL, 
-        PRIMARY KEY (subject_id, timestamp)
+        PRIMARY KEY (subject_id, gesture, repetition, reading_count)
     )
     """,
     'calibration': """
@@ -89,21 +91,17 @@ def _connect():
         print(error)
         raise error
 
-def _insert(table: str, data: dict, returning:list=None):
+def _insert(sql: str, data, returning:bool=False):
     """ insert data into table """
-
-    columns, values = data.keys(), tuple(data.values())
-    _returning = ""
-    if returning:
-        _returning = f" RETURNING ({', '.join(returning)})"
-    returned = None
     conn = None
+    returned = None
     try:
         conn = _connect()
         # create a new cursor
         cur = conn.cursor()
         # execute the INSERT statement
-        cur.execute(f"INSERT INTO {table}({','.join(columns)}) VALUES %s{_returning};", (values,))
+        #print(str((*data,)))
+        cur.execute(sql, (*data,))
 
         # get the generated id back
         if returning:
@@ -113,7 +111,6 @@ def _insert(table: str, data: dict, returning:list=None):
         conn.commit()
         # close communication with the database
         cur.close()
-        print(f"Inserted {values} for into {table}. Received {returned} back.")
     except (Exception, psycopg2.DatabaseError) as error:
         raise error
     finally:
@@ -124,16 +121,42 @@ def _insert(table: str, data: dict, returning:list=None):
 
 def insert_subject(subject):
     """ insert a new subject into the subjects table """
-    subject_id = _insert(table='subjects', data=subject, returning= ['subject_id'])[0][0]
+    columns, values = subject.keys(), subject.values()
+    returning = f""
+
+    sql = f"INSERT INTO subjects({','.join(columns)}) VALUES ({','.join(['%s' for _ in values])}) RETURNING subject_id;"
+
+    subject_id = _insert(sql, values, returning=True)[0][0]
+    
+    print(f"Inserted {values} for into 'subjects'. Received {subject_id} back.")
     return subject_id
 
 def insert_calibration(calibration):
     """ insert a new calibration into the calibration table """
-    result = _insert(table='calibration', data=calibration, returning=None)
+    columns, values = calibration.keys(), calibration.values()
+
+    sql = f"""INSERT INTO calibration({','.join(columns)}) VALUES ({','.join(['%s' for _ in values])}) 
+    ON CONFLICT (subject_id, calibration_gesture) DO UPDATE 
+    SET calibration_iterations = Excluded.calibration_iterations, calibration_values = Excluded.calibration_values
+    ;"""
+
+    _insert(sql, values)
+    
+    print(f"Inserted {values} for into 'calibration'.")
+    return
 
 def insert_data(data):
     """ insert new data into the data table"""
-    result = _insert(table='data', data=data, returning=None)
+
+    columns, values = data.keys(), data.values()
+    sql = f"""INSERT INTO data({','.join(columns)}) VALUES ({','.join(['%s' for _ in values])}) 
+    ON CONFLICT (subject_id, gesture, repetition, reading_count) DO NOTHING
+    ;"""
+
+    _insert(sql, values)
+    
+    #print(f"Inserted {values} for into 'data'.")
+    return
 
 def _delete(table: str, condition: str, args):
     """ delete rows from table where condition matches """
@@ -141,14 +164,12 @@ def _delete(table: str, condition: str, args):
     try:
         conn = _connect()
         cur = conn.cursor()
-        # execute the UPDATE  statement
-        
-        cur.execute(f"DELETE FROM {table} WHERE {condition}", args)
+        sql = f"DELETE FROM {table} WHERE {condition};"
+        # execute the DELETE  statement
+        cur.execute(sql, args)
         # get the number of updated rows
         rows_deleted = cur.rowcount
         print(f"Deleted {rows_deleted} row(s).")
-        sql = f"DELETE FROM {table} WHERE {condition}"
-        print(f"SQL: '{sql}', Args: '{args}'")
         # Commit the changes to the database
         conn.commit()
         # Close communication with the PostgreSQL database
@@ -238,9 +259,15 @@ def reset(table: str, cascade:bool=False):
         try:
             conn = _connect()
             cur = conn.cursor()
-            cur.execute(f"DROP TABLE IF EXISTS {table}{' CASCADE' if cascade else ''}")
+            sql = f"DROP TABLE IF EXISTS {table}{' CASCADE' if cascade else ''};"
+            cur.execute(sql)
+            conn.commit()
+            cur.close()
             print(f"Dropped table '{table}'")
+            
+            cur = conn.cursor()
             cur.execute(SCHEMA[table])
+            conn.commit()
             cur.close()
         except (Exception, psycopg2.DatabaseError) as error:
             print(error)
@@ -256,3 +283,96 @@ def reset_all():
     reset('data')
     reset('subjects', cascade=True)
     print('reset done')
+
+def exists(table, context):
+    columns, values = context.keys(), context.values()
+    where = ' AND '.join(['='.join([column, '%s']) for column in columns])
+    sql = f"SELECT EXISTS(SELECT 1 FROM {table} WHERE ({where}));"
+    exists = False
+    conn = None
+    try:
+        conn = _connect()
+        # create a new cursor
+        cur = conn.cursor()
+        # execute the sql statement
+        cur.execute(sql, (*values,))
+        # get the result back
+        exists = cur.fetchone()[0]
+        # close communication with the database
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        raise error
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return exists
+
+def clear_existing_data(meta_data):
+    if exists('data', meta_data):
+        row_deleted = delete_data(subject_id=meta_data['subject_id'], gesture=meta_data['gesture'],  repetition=meta_data['repetition'])
+        print(f"Deleted {row_deleted} rows from data for {meta_data}")
+    return
+    
+def _insert_many(sql, values):
+    """ insert lots of data into table """
+    conn = None
+    returned = None
+    try:
+        conn = _connect()
+        # create a new cursor
+        cur = conn.cursor()
+        # execute the INSERT statement
+        execute_values(cur, sql, values)
+        
+        # commit the changes to the database
+        conn.commit()
+        # close communication with the database
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        raise error
+    finally:
+        if conn is not None:
+            conn.close()
+    return returned
+
+def insert_data_repetition(repetition_data):
+    start = time.perf_counter()
+    columns = repetition_data[0].keys()
+    values = [(*x.values(),) for x in repetition_data]
+    sql = f"""INSERT INTO data({','.join(columns)}) VALUES %s
+    ON CONFLICT (subject_id, gesture, repetition, reading_count) DO NOTHING
+    ;"""
+    _insert_many(sql, values)
+    elapsed = time.perf_counter() - start
+    print(f'Inserted {len(values)} data points in {elapsed} seconds')
+
+def test_data_insert(n=500*10):
+    print('Generating data')
+    data = []
+    for i in range(n):
+        data.append({
+        'subject_id': 13,
+        'gesture': "dummy gesture", 
+        'repetition': 1,
+        'reading_count': i,
+        'readings': [random.randint(5,165) for i in range(8)] + [random.randint(5,165) for i in range(7)],
+        'timestamp': time.strftime("%H:%M:%S.{}".format(repr(time.time()).split('.')[1]), time.localtime(time.time()))
+        })
+
+    print('Inserting data')
+    insert_data_repetition(data)
+
+if __name__ == '__main__':
+    tables = ['data']
+    for table in tables:
+        #get_all(table)
+        pass
+
+    test_data_insert()
+    #insert_dummies()
+    for table in tables:
+        #get_all(table)
+        pass
+
+    print('done')
