@@ -256,17 +256,3 @@ def reset_all():
     reset('data')
     reset('subjects', cascade=True)
     print('reset done')
-
-if __name__ == '__main__':
-
-    for table in SCHEMA.keys():
-        get_all(table)
-
-    #delete_data(17, 'dummy gesture', 1)
-    #delete_calibration(17, 'dummy gesture 2')
-    delete_subject(13)
-
-    for table in SCHEMA.keys():
-        get_all(table)
-
-    print('done')

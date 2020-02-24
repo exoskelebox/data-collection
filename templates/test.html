@@ -41,7 +41,7 @@ function start() {
         $('#data').val(JSON.stringify(data));
         $('form').submit();
     }).fail(() => {
-        toast('Something went wrong, please try again...', 'danger');
+        flash('Something went wrong, please try again...', 'danger');
     }).always(() => {
         unblockui();
     });  

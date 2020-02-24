@@ -2,6 +2,7 @@ from serial import Serial
 from time import sleep
 import typing
 
+
 class BIOX(Serial):
     def __init__(self, port, baudrate=256000, timeout=.003, sensors=8):
         super().__init__(port=port, baudrate=baudrate, timeout=timeout)
@@ -39,12 +40,12 @@ class BIOX(Serial):
         """
         line = list(super().read(8))
         return line[:self.sensors]
-    
+
     def readlines(self) -> typing.List[typing.List[int]]:
         """
         Read all lines currently available in the buffer of the OS.
         """
-        buffer = list(super().read_all()) 
+        buffer = list(super().read_all())
         lines = [buffer[i:i+8] for i in range(0, len(buffer), 8)]
         return lines[:][:self.sensors]
 
@@ -71,10 +72,7 @@ class BIOX(Serial):
         super().flush()
         super().reset_input_buffer()
         super().reset_output_buffer()
-        #sleep(self.timeout) # TODO: Flush validation is failing, there is still data in_waiting.
-        if self.read() != ''.encode():
-            raise ValueError('BIOX device flush failed')
-        
+        # sleep(self.timeout) # TODO: Flush validation is failing, there is still data in_waiting.
 
     def close(self) -> None:
         """
@@ -98,7 +96,7 @@ class Calibration():
         """
         self.biox.write('I'.encode())
         self.iterations += 1
-    
+
     def decrement(self) -> None:
         """
         Decrement the sensors resting values.

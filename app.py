@@ -13,6 +13,7 @@ app.config['SECRET_KEY'] = os.urandom(32)
 app.config.from_object(DevelopmentConfig if app.config.get(
     'FLASK_ENV', '') == 'development' else ProductionConfig)
 
+
 @app.context_processor
 def inject_debug():
     return dict(debug=app.debug)

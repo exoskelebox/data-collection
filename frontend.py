@@ -28,9 +28,11 @@ def ensure_folder_exists(folder):
 def index():
     return render_template('index.html')
 
+
 @frontend.route('/thank-you')
 def done():
     return render_template('complete.html')
+
 
 @frontend.route('/form/', methods=('GET', 'POST'))
 def data_form():
@@ -39,23 +41,23 @@ def data_form():
     if form.validate_on_submit():
         # construct subject tuple
         subject = {
-            'subject_age': form.age, 
-            'subject_gender': form.gender, 
-            'subject_fitness': form.phys_exercise, 
-            'subject_impairment': form.wrist_function, 
-            'subject_handedness': form.handedness, 
-            'subject_wrist_circumference': form.wrist_circumference, 
+            'subject_age': form.age,
+            'subject_gender': form.gender,
+            'subject_fitness': form.phys_exercise,
+            'subject_impairment': form.wrist_function,
+            'subject_handedness': form.handedness,
+            'subject_wrist_circumference': form.wrist_circumference,
             'subject_forearm_circumference': form.arm_circumference,
         }
         # attempt to insert into database
         try:
             user_id = db.insert_subject(subject)
         except Exception as identifier:
-            flash('Could not insert into database, please check the fields and try again.', 'danger')
+            flash(
+                'Could not insert into database, please check the fields and try again.', 'danger')
         else:
             return redirect(url_for('.calibrate', user_id=user_id, step=0))
 
-        
     return render_template('form.html', form=form)
 
 
@@ -72,22 +74,22 @@ def calibrate(user_id, step):
 
     # TODO: remove existing data if any from database
 
-
     if form.validate_on_submit():
-        
+
         # construct calibration tuple
         calibration_values, calibration_iterations = data
         calibration = {
-            'subject_id': user_id, 
-            'calibration_gesture': gesture, 
-            'calibration_values': calibration_values, 
+            'subject_id': user_id,
+            'calibration_gesture': gesture,
+            'calibration_values': calibration_values,
             'calibration_iterations': calibration_iterations
         }
         # attempt to insert into database
         try:
             db.insert_calibration(calibration)
         except Exception as identifier:
-            flash('Could not insert into database, please check the fields and try again.', 'danger')
+            flash(
+                'Could not insert into database, please check the fields and try again.', 'danger')
         else:
             if step == len(calibration_image_urls) - 1:
                 return redirect(url_for('.test', test_identifier=str(uuid.uuid4()), step=0))
@@ -125,7 +127,8 @@ def test(test_identifier, calibration_identifier, step, reps=5):
 
         with open(f'{data_folder}/{calibration_identifier}.csv', 'a+') as f:
             # TODO: insert data into database
-            for reading_1, reading_2, timestamp in data:
+            for reading, timestamp in data:
+                reading_1, reading_2 = reading
                 row['reading_1'] = reading_1
                 row['reading_2'] = reading_2
                 row['timestamp'] = timestamp

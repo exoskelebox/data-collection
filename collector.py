@@ -7,6 +7,9 @@ import time
 from biox import BIOX
 import numpy as np
 from serial.serialutil import SerialException
+from typing import List
+from concurrent.futures import Future, wait
+from concurrent.futures.thread import ThreadPoolExecutor
 
 
 collector = Blueprint('collector', __name__)
@@ -24,7 +27,6 @@ def calibration(gesture, **kwargs):
     if not port:
         return make_response(('BIOX device not found, make sure it is connected and try again.', 500))
 
-    print(port)
     # settings
     num_sensors = current_app.config.get(f'{device_name}_sensors'.upper(), 8)
     threshold = kwargs.get('threshold', 117)
@@ -54,7 +56,33 @@ def calibration(gesture, **kwargs):
 
 @collector.route('data/')
 def data():
-    return json.jsonify(None)
+    ports = get_biox_device_ports()
+
+    if not any(ports):
+        return make_response(('A BIOX device was not found, make sure all devices are connected and try again.', 500))
+
+    try:
+        bioxes: List[BIOX] = []
+        data = []
+
+        for port in ports:
+            num_sensors = next(device.get('num_sensors') for device in current_app.config.get(
+                'BIOX_DEVICES').values() if port.serial_number in device.get('serial_number'))
+            biox = BIOX(port.device, sensors=num_sensors)
+            bioxes.append(biox)
+
+        with ThreadPoolExecutor() as executor:
+            t_end = time.time() + current_app.config.get('TEST_TIME', 5)
+            while time.time() < t_end:
+                data.append(
+                    (list(executor.map(fetch_data, bioxes)), time.time()))
+
+    except SerialException as err:
+        return make_response(('BIOX device closed the connection prematurely', 500))
+    else:
+        return json.jsonify(data)
+    finally:
+        [biox.close() for biox in bioxes if biox]
 
 
 def get_biox_device_port(key) -> ListPortInfo:
@@ -65,68 +93,17 @@ def get_biox_device_port(key) -> ListPortInfo:
     return port
 
 
-def flush_biox_device(port):
-    """Flush the biox device data"""
-    serial = None
-    try:
-        serial = Serial(port.device, baudrate=250000, bytesize=8, timeout=1)
-        serial.write("R".encode())
-        time.sleep(.1)
-        serial.flush()
-        serial.reset_input_buffer()
-        serial.reset_output_buffer()
-        time.sleep(.1)
-        assert serial.out_waiting == 0, 'Serial device was not flushed properly'
-    except Exception as ex:
-        raise ex
-    finally:
-        if serial:
-            serial.close()
-        return port
-
-
-def get_biox_device_ports() -> list:
+def get_biox_device_ports() -> List[ListPortInfo]:
     """Gets the ports associated with a biox device"""
-    return [flush_biox_device(port) for port in list_ports.comports() if is_biox_device(port)]
+    return [port for port in list_ports.comports() if is_biox_device(port)]
 
 
-def is_biox_device(port) -> bool:
+def is_biox_device(port: ListPortInfo) -> bool:
     """Check if port is associated with a biox device"""
-    serial = None
-    try:
-        serial = Serial(port.device, baudrate=250000, bytesize=8, timeout=1)
-        serial.write('C'.encode())
-        return True if 'A'.encode() in serial.read() else False
-    except Exception as ex:
-        return False
-    finally:
-        if serial:
-            serial.close()
+    return port.serial_number in [device.get('serial_number') for device in current_app.config.get('BIOX_DEVICES').values()]
 
 
-if __name__ == "__main__":
-    device_name: str = 'arm'.upper()
-    serial_number = '4083140' # '4407090'
-    port: ListPortInfo = next(port for port in list_ports.comports() if port.serial_number == serial_number)
-    # settings
-    num_sensors = 7
-    threshold = 117
-    num_to_max = 2
-
-    # initialize
-    iterations = 0
-    maxed_sensors = 0
-
-    with BIOX(port.device, sensors=num_sensors) as biox:
-        biox.calibration.reset()
-        while biox.readable():
-            biox.fill_output_buffer()
-            reading = biox.readline()
-            print(reading)
-            biox.flush()
-            maxed_sensors = len([i for i in reading if i > threshold])
-            if maxed_sensors >= num_to_max:
-                break
-            else:
-                biox.calibration.increment()
-                iterations += 1
+def fetch_data(device: BIOX):
+    device.fill_output_buffer()
+    reading = device.readline()
+    return reading
