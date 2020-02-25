@@ -39,16 +39,18 @@ def data_form():
     form = DataForm()
 
     if form.validate_on_submit():
+
         # construct subject tuple
         subject = {
-            'subject_age': form.age,
-            'subject_gender': form.gender,
-            'subject_fitness': form.phys_exercise,
-            'subject_impairment': form.wrist_function,
-            'subject_handedness': form.handedness,
-            'subject_wrist_circumference': form.wrist_circumference,
-            'subject_forearm_circumference': form.arm_circumference,
+            'subject_age': form.age.data,
+            'subject_gender': form.gender.data,
+            'subject_fitness': form.phys_exercise.data,
+            'subject_impairment': form.wrist_function.data,
+            'subject_handedness': form.handedness.data,
+            'subject_wrist_circumference': form.wrist_circumference.data,
+            'subject_forearm_circumference': form.arm_circumference.data,
         }
+
         # attempt to insert into database
         try:
             user_id = db.insert_subject(subject)
@@ -66,13 +68,11 @@ def calibrate(user_id, step):
     form = CalibrateForm()
     calibration_image_urls = get_calibration_sequence()
     data = form.data.data
-    gesture = form.image.data
+    gesture: str = form.image.data
 
     # Handle index out of range error
     if step >= len(calibration_image_urls):
         return redirect(url_for('.calibrate', user_id=user_id, step=len(calibration_image_urls) - 1))
-
-    # TODO: remove existing data if any from database
 
     if form.validate_on_submit():
 
@@ -80,10 +80,12 @@ def calibrate(user_id, step):
         calibration_values, calibration_iterations = data
         calibration = {
             'subject_id': user_id,
-            'calibration_gesture': gesture,
+            'calibration_gesture': gesture.split('/')[-1].replace('_', ' ').split('.')[0].strip(),
             'calibration_values': calibration_values,
             'calibration_iterations': calibration_iterations
         }
+
+        print(calibration)
         # attempt to insert into database
         try:
             db.insert_calibration(calibration)
@@ -92,7 +94,7 @@ def calibrate(user_id, step):
                 'Could not insert into database, please check the fields and try again.', 'danger')
         else:
             if step == len(calibration_image_urls) - 1:
-                return redirect(url_for('.test', test_identifier=str(uuid.uuid4()), step=0))
+                return redirect(url_for('.test', user_id=user_id, step=0))
             else:
                 return redirect(url_for('.calibrate', user_id=user_id, step=step + 1))
 
@@ -103,53 +105,51 @@ def calibrate(user_id, step):
     return render_template('calibrate.html', form=form, status=status_text, gesture=gesture)
 
 
-@frontend.route('/test/<test_identifier>/<calibration_identifier>/<int:step>', methods=('GET', 'POST'))
-def test(test_identifier, calibration_identifier, step, reps=5):
+@frontend.route('/test/<int:user_id>/<int:step>', methods=('GET', 'POST'))
+def test(user_id, step, reps=5):
     form = TestForm()
     test_image_urls = get_gesture_sequence(reps)
     data = form.data.data
-    gesture = form.image.data
-
+    gesture = form.image.data.split(
+        '/')[-1].replace('_', ' ').split('.')[0].strip()
+    
     # Handle index out of range error
     if step >= len(test_image_urls):
-        return redirect(url_for('.test', calibration_identifier=calibration_identifier, step=len(test_image_urls) - 1))
-    
+        return redirect(url_for('.test', user_id=user_id, step=len(test_image_urls) - 1))
+
     tests_per_rep = int(len(test_image_urls) / reps)
     rep = math.ceil((step + 1) / tests_per_rep)
-    
+
     # remove data with matching id, cal_id && gesture from database
     db.clear_existing_data({
-                'subject_id': test_identifier,
-                'gesture': gesture,
-                'repetition': rep})
+        'subject_id': user_id,
+        'gesture': gesture,
+        'repetition': rep})
 
     if form.validate_on_submit():
+        rows = []
         # insert data into database
-        count = 0
-        for reading, time in data:
-            reading_1, reading_2 = reading
-            readings = reading_1 + reading_2
-            timestamp = time.strftime("%H:%M:%S.{}".format(repr(time.time()).split('.')[1]), time.localtime(time.time()))
+        for count, item in enumerate(data):
+            reading, timestamp = item
+            timestamp = time.strftime("%H:%M:%S.{}".format(str(timestamp).split('.')[-1]), time.localtime(timestamp))
 
-            data.append({
-                'subject_id': test_identifier,
+            rows.append({
+                'subject_id': user_id,
                 'gesture': gesture,
                 'repetition': rep,
                 'reading_count': count,
-                'readings': readings,
+                'readings': reading,
                 'timestamp': timestamp
             })
-            count += 1
-            # attempt to insert into database
         try:
-            db.insert_data_repetition(data)
+            db.insert_data_repetition(rows)
         except Exception as identifier:
             flash('Could not insert into database, please check the fields and try again.', 'danger')
-        
+
         if step == len(test_image_urls) - 1:
             return redirect(url_for('.done'))
         else:
-            return redirect(url_for('.test', test_identifier=test_identifier, calibration_identifier=calibration_identifier, step=step + 1))
+            return redirect(url_for('.test', user_id=user_id, step=step + 1))
 
     form.image.data = test_image_urls[step]
     form.data.data = None

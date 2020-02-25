@@ -72,10 +72,11 @@ def data():
             bioxes.append(biox)
 
         with ThreadPoolExecutor() as executor:
-            t_end = time.time() + current_app.config.get('TEST_TIME', 5)
-            while time.time() < t_end:
-                data.append(
-                    (list(executor.map(fetch_data, bioxes)), time.time()))
+            t_end = time.perf_counter() + current_app.config.get('TEST_TIME', 5)
+            t_curr = time.perf_counter()
+            while t_curr < t_end:
+                data.append((list(executor.map(fetch_data, bioxes)), t_curr))
+                t_curr = time.perf_counter()
 
     except SerialException as err:
         return make_response(('BIOX device closed the connection prematurely', 500))
