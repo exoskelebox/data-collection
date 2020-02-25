@@ -4,16 +4,16 @@ import typing
 
 
 class BIOX(Serial):
-    def __init__(self, port, baudrate=256000, timeout=.003, sensors=8):
+    def __init__(self, port, baudrate=256000, timeout= None, sensors=8):
         super().__init__(port=port, baudrate=baudrate, timeout=timeout)
         self.sensors = sensors
         self.connect()
         self.calibration = Calibration(self)
         self.flush()
 
-    def fill_output_buffer(self) -> None:
+    def fill_input_buffer(self) -> None:
         """
-        Write an "S" to the BIOX device which tells it to fill the output 
+        Write an "S" to the BIOX device which tells it to fill the input 
         buffer with lines.
         """
         self.write('S'.encode())
@@ -25,7 +25,6 @@ class BIOX(Serial):
         which is necessary before performing a read in most cases.
         """
         res = super().write(data)
-        sleep(self.timeout)
         return res
 
     def read_all(self) -> bytes:
@@ -68,18 +67,15 @@ class BIOX(Serial):
         """
         Flush the input and output buffer.
         """
-        self.write("E".encode())
         super().flush()
         super().reset_input_buffer()
         super().reset_output_buffer()
-        # sleep(self.timeout) # TODO: Flush validation is failing, there is still data in_waiting.
 
     def close(self) -> None:
         """
         Close the port.
         """
         if self.is_open:
-            self.flush()
             self.disconnect()
             return super().close()
 

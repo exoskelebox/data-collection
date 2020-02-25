@@ -39,14 +39,17 @@ def calibration(gesture, **kwargs):
         biox = BIOX(port.device, sensors=num_sensors)
         biox.calibration.reset()
         while biox.readable():
-            biox.fill_output_buffer()
+            biox.reset_input_buffer()
+            print(biox.in_waiting)
+            biox.fill_input_buffer()
             reading = biox.readline()
-            biox.flush()
+            print(biox.out_waiting)
             maxed_sensors = len([i for i in reading if i > threshold])
             if maxed_sensors >= num_to_max:
                 break
             else:
                 biox.calibration.increment()
+                time.sleep(.01)
     except SerialException as err:
         return make_response(('BIOX device closed the connection prematurely', 500))
     else:
@@ -71,7 +74,7 @@ def data():
             biox = BIOX(port.device, sensors=num_sensors)
             bioxes.append(biox)
 
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=2) as executor:
             t_end = time.perf_counter() + current_app.config.get('TEST_TIME', 5)
             t_curr = time.perf_counter()
             while t_curr < t_end:
@@ -105,6 +108,7 @@ def is_biox_device(port: ListPortInfo) -> bool:
 
 
 def fetch_data(device: BIOX):
-    device.fill_output_buffer()
-    reading = device.readline()
-    return reading
+    device.reset_input_buffer()
+    device.fill_input_buffer()
+    line = device.readline()
+    return line
