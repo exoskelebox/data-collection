@@ -126,7 +126,8 @@ def test(test_identifier, calibration_identifier, step, reps=5):
     if form.validate_on_submit():
         # insert data into database
         count = 0
-        for reading_1, reading_2, time in data:
+        for reading, time in data:
+            reading_1, reading_2 = reading
             readings = reading_1 + reading_2
             timestamp = time.strftime("%H:%M:%S.{}".format(repr(time.time()).split('.')[1]), time.localtime(time.time()))
 
