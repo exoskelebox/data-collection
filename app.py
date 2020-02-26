@@ -9,7 +9,6 @@ app = Flask(__name__, static_url_path='/static')
 app.register_blueprint(frontend)
 app.register_blueprint(collector, url_prefix='/collect')
 app.register_blueprint(filters)
-app.config['SECRET_KEY'] = os.urandom(32)
 app.config.from_object(DevelopmentConfig if app.config.get(
     'FLASK_ENV', '') == 'development' else ProductionConfig)
 

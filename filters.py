@@ -17,3 +17,7 @@ def has_um(field):
         Check if field render keywords contain a unit of measurement
     """
     return True if field.render_kw and 'um' in field.render_kw else False
+
+@filters.app_template_filter('title')
+def title(text : str):
+    return text.title()

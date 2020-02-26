@@ -17,18 +17,20 @@ collector = Blueprint('collector', __name__)
 
 @collector.route('/calibration/<gesture>')
 def calibration(gesture, **kwargs):
-    device_name: str = gesture.split('_')[0].upper()
+    device_name: str = gesture.split('_')[0]
 
     if not device_name.isalpha():
         return make_response((f'"{device_name}" is not a valid device name', 400))
 
-    port = get_biox_device_port(device_name)
+    device_conf: dict = current_app.config.get('BIOX_DEVICES', {}).get(device_name, {})
+
+    port = get_biox_device_port(device_conf.get('serial_number', ''))
 
     if not port:
         return make_response(('BIOX device not found, make sure it is connected and try again.', 500))
 
     # settings
-    num_sensors = current_app.config.get(f'{device_name}_sensors'.upper(), 8)
+    num_sensors = device_conf.get('sensors', 8)
     threshold = kwargs.get('threshold', 117)
     num_to_max = kwargs.get('num_to_max', 2)
 
@@ -40,10 +42,8 @@ def calibration(gesture, **kwargs):
         biox.calibration.reset()
         while biox.readable():
             biox.reset_input_buffer()
-            print(biox.in_waiting)
             biox.fill_input_buffer()
             reading = biox.readline()
-            print(biox.out_waiting)
             maxed_sensors = len([i for i in reading if i > threshold])
             if maxed_sensors >= num_to_max:
                 break
@@ -89,9 +89,8 @@ def data():
         [biox.close() for biox in bioxes if biox]
 
 
-def get_biox_device_port(key) -> ListPortInfo:
+def get_biox_device_port(serial_number) -> ListPortInfo:
     """Gets the port of a biox device based on the serial number associated with key"""
-    serial_number = str(current_app.config.get(key.upper()))
     port = next(port for port in list_ports.comports()
                 if port.serial_number == serial_number)
     return port
