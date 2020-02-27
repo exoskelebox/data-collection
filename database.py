@@ -4,6 +4,7 @@ import time
 from configparser import ConfigParser
 import psycopg2
 from psycopg2.extras import execute_values
+from flask import current_app
 
 SCHEMA = {
     'subjects': """
@@ -268,22 +269,26 @@ def exists(table, context) -> bool:
 #region Utility
 def _config(filename='database.ini', section='postgresql') -> dict:
     """ 
-    Read and parse database configuration from file.
+    Read and parse database configuration from file or flask config.
     """
-    # create a parser
-    parser = ConfigParser()
-    # read config file
-    parser.read(filename)
-
-    # get section, default to postgresql
     db = {}
-    if parser.has_section(section):
-        params = parser.items(section)
-        for param in params:
-            db[param[0]] = param[1]
+
+    if current_app:
+        db = current_app.config.get('DATABASE', {})
     else:
-        raise Exception(
-            'Section {0} not found in the {1} file'.format(section, filename))
+        # create a parser
+        parser = ConfigParser()
+        # read config file
+        parser.read(filename)
+
+        # get section, default to postgresql
+        if parser.has_section(section):
+            params = parser.items(section)
+            for param in params:
+                db[param[0]] = param[1]
+    
+    if not db:
+        raise Exception('Database configuration not found')
 
     return db
 
