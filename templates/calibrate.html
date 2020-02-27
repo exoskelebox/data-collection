@@ -31,6 +31,21 @@
 <script type=text/javascript> 
 $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 
+document.addEventListener('keydown', function(event) {
+    if(event.keyCode == 33) {
+        event.preventDefault();
+        prev();
+    }
+    else if(event.keyCode == 34) {
+        event.preventDefault();
+        start();
+    }
+    else if(event.keyCode == 190) {
+        event.preventDefault();
+        end();
+    }
+});
+
 function start() {
     clearFlash();
     blockui('collecting data...');

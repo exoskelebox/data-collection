@@ -6,6 +6,7 @@ from filters import filters
 from config import ProductionConfig, DevelopmentConfig
 
 app = Flask(__name__, static_url_path='/static')
+app.config['FLASK_ENV'] = os.environ.get('FLASK_ENV', '')
 
 # Environment specific initializations
 if app.config.get('FLASK_ENV', '') == 'development':
