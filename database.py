@@ -41,7 +41,9 @@ SCHEMA = {
     """,
 }
 
-#region INSERT handling
+# region INSERT handling
+
+
 def _insert(sql: str, data, returning: bool = False) -> list:
     """ 
     Insert data into table.
@@ -72,6 +74,7 @@ def _insert(sql: str, data, returning: bool = False) -> list:
 
     return returned
 
+
 def insert_subject(subject) -> int:
     """ 
     Insert a new subject into the subjects table. 
@@ -86,6 +89,7 @@ def insert_subject(subject) -> int:
     print(
         f"Inserted {values} for into 'subjects'. Received {subject_id} back.")
     return subject_id
+
 
 def insert_calibration(calibration) -> None:
     """ 
@@ -103,6 +107,7 @@ def insert_calibration(calibration) -> None:
     print(f"Inserted {values} for into 'calibration'.")
     return
 
+
 def insert_data(data) -> None:
     """ 
     Insert new data point into the data table.
@@ -117,6 +122,7 @@ def insert_data(data) -> None:
 
     #print(f"Inserted {values} for into 'data'.")
     return
+
 
 def _insert_many(sql, values) -> None:
     """ 
@@ -139,7 +145,8 @@ def _insert_many(sql, values) -> None:
     finally:
         if conn is not None:
             conn.close()
-    return 
+    return
+
 
 def insert_data_repetition(repetition_data) -> None:
     """
@@ -154,9 +161,11 @@ def insert_data_repetition(repetition_data) -> None:
     _insert_many(sql, values)
     elapsed = time.perf_counter() - start
     print(f'Inserted {len(values)} data points in {elapsed} seconds')
-#endregion
+# endregion
 
-#region DELETE handling
+# region DELETE handling
+
+
 def _delete(table: str, condition: str, args) -> int:
     """ 
     Delete rows from table where condition matches.
@@ -182,25 +191,29 @@ def _delete(table: str, condition: str, args) -> int:
         if conn is not None:
             conn.close()
 
+
 def delete_subject(subject_id) -> int:
     """ 
     Delete subject with matching id from subjects table.
     """
     return _delete("subjects", "(subject_id = %s)", (subject_id,))
 
+
 def delete_calibration(subject_id, gesture) -> int:
     """
     Delete calibration.
     """
-    return _delete("calibration", "(subject_id = %s AND calibration_gesture = %s)", 
-                (subject_id, gesture,))
+    return _delete("calibration", "(subject_id = %s AND calibration_gesture = %s)",
+                   (subject_id, gesture,))
+
 
 def delete_data(subject_id, gesture, repetition) -> int:
     """
     Delete all subjects data for relevant gesture and repetition.
     """
     return _delete("data", "(subject_id = %s AND gesture = %s AND repetition = %s)",
-                (subject_id, gesture, repetition,))
+                   (subject_id, gesture, repetition,))
+
 
 def clear_existing_data(metadata) -> int:
     """
@@ -212,9 +225,11 @@ def clear_existing_data(metadata) -> int:
             subject_id=metadata['subject_id'], gesture=metadata['gesture'],  repetition=metadata['repetition'])
         print(f"Deleted {rows_deleted} rows from data for {metadata}")
     return rows_deleted
-#endregion
+# endregion
 
-#region SELECT handling
+# region SELECT handling
+
+
 def get_all(table):
     """ 
     Get all rows from table.
@@ -237,6 +252,7 @@ def get_all(table):
     finally:
         if conn is not None:
             conn.close()
+
 
 def exists(table, context) -> bool:
     """
@@ -264,9 +280,11 @@ def exists(table, context) -> bool:
             conn.close()
 
     return exists
-#endregion
+# endregion
 
-#region Utility
+# region Utility
+
+
 def _config(filename='database.ini', section='postgresql') -> dict:
     """ 
     Read and parse database configuration from file or flask config.
@@ -286,11 +304,12 @@ def _config(filename='database.ini', section='postgresql') -> dict:
             params = parser.items(section)
             for param in params:
                 db[param[0]] = param[1]
-    
+
     if not db:
         raise Exception('Database configuration not found')
 
     return db
+
 
 def setup(schema=SCHEMA):
     """ 
@@ -314,10 +333,14 @@ def setup(schema=SCHEMA):
         if conn is not None:
             conn.close()
 
-def _connect(config=_config()):
+
+def _connect(config={}):
     """ 
     Connect to the database server.
     """
+    if not config:
+        config = _config()
+
     conn = None
     try:
         # connect to the PostgreSQL database
@@ -326,6 +349,7 @@ def _connect(config=_config()):
         print(error)
         raise error
     return conn
+
 
 def reset(table: str, cascade: bool = False) -> None:
     """ 
@@ -355,6 +379,7 @@ def reset(table: str, cascade: bool = False) -> None:
     else:
         print(f"Error: '{table}' not in schema.")
 
+
 def reset_all() -> None:
     """ 
     Drop all tables and recreate.
@@ -366,7 +391,7 @@ def reset_all() -> None:
     reset('subjects', cascade=True)
 
     print('Reset done')
-#endregion
+# endregion
 
 
 def test_data_insert(n=500*10) -> None:
@@ -382,10 +407,11 @@ def test_data_insert(n=500*10) -> None:
             'timestamp': time.strftime("%H:%M:%S.{}".format(repr(time.time()).split('.')[1]), time.localtime(time.time()))
         })
 
-    print('Inserting data')
     insert_data_repetition(data)
 
-#region Dummy data insertion
+# region Dummy data insertion
+
+
 def _insert_dummy_subject():
     subject = {
         'subject_gender': 'm',
@@ -399,6 +425,7 @@ def _insert_dummy_subject():
     subject_id = insert_subject(subject)
     return subject_id
 
+
 def _insert_dummy_data(sid):
     data = {
         'subject_id': sid,
@@ -410,6 +437,7 @@ def _insert_dummy_data(sid):
     }
     insert_data(data)
 
+
 def _insert_dummy_calibrations(sid):
     for i in range(2):
         calibration = {
@@ -420,24 +448,10 @@ def _insert_dummy_calibrations(sid):
         }
         insert_calibration(calibration)
 
+
 def _insert_dummies():
     sid = _insert_dummy_subject()
     print(f"sid = {sid}")
     _insert_dummy_calibrations(sid)
     _insert_dummy_data(sid)
-#endregion
-
-if __name__ == '__main__':
-    setup()
-    """ tables = ['data']
-    for table in tables:
-        #get_all(table)
-        pass
-
-    test_data_insert()
-    #insert_dummies()
-    for table in tables:
-        #get_all(table)
-        pass
-
-    print('done') """
+# endregion
