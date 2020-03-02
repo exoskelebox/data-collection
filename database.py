@@ -393,25 +393,7 @@ def reset_all() -> None:
     print('Reset done')
 # endregion
 
-
-def test_data_insert(n=500*10) -> None:
-    print('Generating data')
-    data = []
-    for i in range(n):
-        data.append({
-            'subject_id': 13,
-            'gesture': "dummy gesture",
-            'repetition': 1,
-            'reading_count': i,
-            'readings': [random.randint(5, 165) for i in range(8)] + [random.randint(5, 165) for i in range(7)],
-            'timestamp': time.strftime("%H:%M:%S.{}".format(repr(time.time()).split('.')[1]), time.localtime(time.time()))
-        })
-
-    insert_data_repetition(data)
-
-# region Dummy data insertion
-
-
+#region Dummy data insertion
 def _insert_dummy_subject():
     subject = {
         'subject_gender': 'm',
@@ -448,6 +430,21 @@ def _insert_dummy_calibrations(sid):
         }
         insert_calibration(calibration)
 
+def _insert_dummy_data_repetition(n=500*10) -> None:
+    print('Generating data')
+    data = []
+    for i in range(n):
+        data.append({
+            'subject_id': 13,
+            'gesture': "dummy gesture",
+            'repetition': 1,
+            'reading_count': i,
+            'readings': [random.randint(5, 165) for i in range(8)] + [random.randint(5, 165) for i in range(7)],
+            'timestamp': time.strftime("%H:%M:%S.{}".format(repr(time.time()).split('.')[1]), time.localtime(time.time()))
+        })
+
+    print('Inserting data')
+    insert_data_repetition(data)
 
 def _insert_dummies():
     sid = _insert_dummy_subject()
