@@ -10,8 +10,6 @@ from serial.serialutil import SerialException
 from typing import List
 from concurrent.futures import Future, wait
 from concurrent.futures.thread import ThreadPoolExecutor
-import signal
-
 
 collector = Blueprint('collector', __name__)
 
@@ -78,13 +76,11 @@ def data():
             t_end = time.perf_counter() + current_app.config.get('TEST_TIME', 5)
             t_curr = time.perf_counter()
             while t_curr < t_end:
-                signal.alarm(.001)
                 data.append((list(executor.map(fetch_data, bioxes)), t_curr))
                 elapsed = time.perf_counter() - t_curr
                 while(elapsed < .001):
                     elapsed = time.perf_counter() - t_curr
                 t_curr = time.perf_counter()
-                signal.pause()
 
     except SerialException as err:
         return make_response(('BIOX device closed the connection prematurely', 500))
