@@ -11,12 +11,12 @@ SCHEMA = {
     CREATE TABLE subjects (
         subject_id SERIAL PRIMARY KEY,
         subject_gender CHAR(1) NOT NULL CHECK (subject_gender IN ('m','f')),
-        subject_age SMALLINT NOT NULL CHECK (subject_age >= 16 AND subject_age <= 100),
+        subject_age SMALLINT NOT NULL CHECK (subject_age >= 18 AND subject_age <= 100),
         subject_fitness SMALLINT NOT NULL CHECK (subject_fitness >= 0 AND subject_fitness <= 7),
         subject_handedness CHAR(1) NOT NULL CHECK (subject_handedness IN ('r','l')),
         subject_impairment BOOLEAN NOT NULL,
-        subject_wrist_circumference REAL NOT NULL CHECK (subject_wrist_circumference >= 10 AND subject_wrist_circumference <= 25),
-        subject_forearm_circumference REAL NOT NULL CHECK (subject_forearm_circumference >= 15 AND subject_forearm_circumference <= 30)
+        subject_wrist_circumference REAL NOT NULL CHECK (subject_wrist_circumference >= 20 AND subject_wrist_circumference <= 30),
+        subject_forearm_circumference REAL NOT NULL CHECK (subject_forearm_circumference >= 25 AND subject_forearm_circumference <= 40)
     )
     """,
     'data': """ 
@@ -26,7 +26,7 @@ SCHEMA = {
         repetition SMALLINT NOT NULL CHECK (repetition >= 0 AND repetition <= 10),
         reading_count INTEGER NOT NULL CHECK (reading_count >= 0),
         timestamp TIME (6) NOT NULL,
-        readings SMALLINT[] NOT NULL, 
+        readings SMALLINT[][] NOT NULL, 
         PRIMARY KEY (subject_id, gesture, repetition, reading_count)
     )
     """,
@@ -230,7 +230,7 @@ def clear_existing_data(metadata) -> int:
 # region SELECT handling
 
 
-def get_all(table):
+def get_all(table) -> list:
     """ 
     Get all rows from table.
     """
@@ -253,6 +253,32 @@ def get_all(table):
         if conn is not None:
             conn.close()
 
+def get_where(table, context) -> list:
+    """ 
+    Get all rows from table matching context.
+    """
+    columns, values = context.keys(), context.values()
+    where = ' AND '.join(['='.join([column, '%s']) for column in columns])
+    sql = f"SELECT * FROM {table} WHERE ({where});"
+    result = None
+    conn = None
+    try:
+        conn = _connect()
+        # create a new cursor
+        cur = conn.cursor()
+        # execute the sql statement
+        cur.execute(sql, (*values,))
+        # get the result back
+        result = cur.fetchall()
+        # close communication with the database
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        raise error
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return result
 
 def exists(table, context) -> bool:
     """
@@ -393,25 +419,7 @@ def reset_all() -> None:
     print('Reset done')
 # endregion
 
-
-def test_data_insert(n=500*10) -> None:
-    print('Generating data')
-    data = []
-    for i in range(n):
-        data.append({
-            'subject_id': 13,
-            'gesture': "dummy gesture",
-            'repetition': 1,
-            'reading_count': i,
-            'readings': [random.randint(5, 165) for i in range(8)] + [random.randint(5, 165) for i in range(7)],
-            'timestamp': time.strftime("%H:%M:%S.{}".format(repr(time.time()).split('.')[1]), time.localtime(time.time()))
-        })
-
-    insert_data_repetition(data)
-
-# region Dummy data insertion
-
-
+#region Dummy data insertion
 def _insert_dummy_subject():
     subject = {
         'subject_gender': 'm',
@@ -448,10 +456,32 @@ def _insert_dummy_calibrations(sid):
         }
         insert_calibration(calibration)
 
+def _insert_dummy_data_repetitions(sid, n=10) -> None:
+    print('Generating data')
+    
+    for i in range(5):
+        data = []
+        for j in range(5):
+            for k in range(n):
+                data.append({
+                    'subject_id': sid,
+                    'gesture': f"dummy_gesture_{j}",
+                    'repetition': i,
+                    'reading_count': k,
+                    'readings': [random.randint(5, 165) for _ in range(8)] + [random.randint(5, 165) for _ in range(7)],
+                    'timestamp': time.strftime("%H:%M:%S.{}".format(repr(time.time()).split('.')[1]), time.localtime(time.time()))
+                })
+        insert_data_repetition(data)
+    print('Data inserted')
 
-def _insert_dummies():
-    sid = _insert_dummy_subject()
-    print(f"sid = {sid}")
-    _insert_dummy_calibrations(sid)
-    _insert_dummy_data(sid)
+
+def _insert_dummies(n=1):
+    for _ in range(n):
+        sid = _insert_dummy_subject()
+        print(f"sid = {sid}")
+        _insert_dummy_calibrations(sid)
+        _insert_dummy_data_repetitions(sid)
 # endregion
+
+if __name__ == "__main__":
+    reset_all()
