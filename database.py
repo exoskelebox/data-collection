@@ -34,7 +34,7 @@ SCHEMA = {
     CREATE TABLE calibration (
         subject_id INTEGER NOT NULL REFERENCES subjects (subject_id) ON DELETE CASCADE,
         calibration_gesture VARCHAR(32) NOT NULL,
-        calibration_iterations SMALLINT NOT NULL CHECK (calibration_iterations >= 0 and calibration_iterations <=125),
+        calibration_iterations SMALLINT NOT NULL CHECK (calibration_iterations >= 0 and calibration_iterations <=400),
         calibration_values SMALLINT[] NOT NULL,
         PRIMARY KEY (subject_id, calibration_gesture)
     )

@@ -13,8 +13,8 @@ class BIOX(Serial):
 
     def fill_input_buffer(self) -> None:
         """
-        Write an "S" to the BIOX device which tells it to fill the input 
-        buffer with lines.
+        Write an "S" to the BIOX device which tells it to add a line to the input 
+        buffer.
         """
         self.write('S'.encode())
 
@@ -92,6 +92,7 @@ class Calibration():
         """
         self.biox.write('I'.encode())
         self.iterations += 1
+        sleep(.01)
 
     def decrement(self) -> None:
         """
@@ -99,6 +100,7 @@ class Calibration():
         """
         self.biox.write('i'.encode())
         self.iterations -= 1
+        sleep(.01)
 
     def reset(self) -> None:
         """
@@ -107,3 +109,4 @@ class Calibration():
         self.biox.write('R'.encode())
         self.iterations = 0
         self.biox.flush()
+        sleep(.1)

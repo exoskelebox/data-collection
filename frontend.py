@@ -10,6 +10,7 @@ import csv
 import uuid
 import math
 import database as db
+import sys
 
 frontend = Blueprint('frontend', __name__)
 data_folder = 'data'
@@ -55,6 +56,7 @@ def data_form():
         try:
             user_id = db.insert_subject(subject)
         except Exception as identifier:
+            sys.stderr.write(repr(identifier))
             flash(
                 'Could not insert into database, please check the fields and try again.', 'danger')
         else:
@@ -85,13 +87,13 @@ def calibrate(user_id, step):
             'calibration_iterations': calibration_iterations
         }
 
-        print(calibration)
         # attempt to insert into database
         try:
             db.insert_calibration(calibration)
         except Exception as identifier:
+            sys.stderr.write(repr(identifier))
             flash(
-                'Could not insert into database, please check the fields and try again.', 'danger')
+                'Could not insert into database, please try again.', 'danger')
         else:
             if step == len(calibration_image_urls) - 1:
                 return redirect(url_for('.test', user_id=user_id, step=0))
@@ -112,7 +114,7 @@ def test(user_id, step, reps=5):
     data = form.data.data
     gesture = form.image.data.split(
         '/')[-1].replace('_', ' ').split('.')[0].strip()
-    
+
     # Handle index out of range error
     if step >= len(test_image_urls):
         return redirect(url_for('.test', user_id=user_id, step=len(test_image_urls) - 1))
@@ -131,7 +133,8 @@ def test(user_id, step, reps=5):
         # insert data into database
         for count, item in enumerate(data):
             reading, timestamp = item
-            timestamp = time.strftime("%H:%M:%S.{}".format(str(timestamp).split('.')[-1]), time.localtime(timestamp))
+            timestamp = time.strftime("%H:%M:%S.{}".format(
+                str(timestamp).split('.')[-1]), time.localtime(timestamp))
 
             rows.append({
                 'subject_id': user_id,
@@ -144,7 +147,9 @@ def test(user_id, step, reps=5):
         try:
             db.insert_data_repetition(rows)
         except Exception as identifier:
-            flash('Could not insert into database, please check the fields and try again.', 'danger')
+            sys.stderr.write(repr(identifier))
+            flash(
+                'Could not insert into database, please try again.', 'danger')
 
         if step == len(test_image_urls) - 1:
             return redirect(url_for('.done'))
