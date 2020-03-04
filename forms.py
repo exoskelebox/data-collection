@@ -50,8 +50,8 @@ class DataForm(FlaskForm):
         choices=[('r', 'Right'), ('l', 'Left'), ('a', 'Ambidextrous')],
         validators=[InputRequired()]
     )
-    wrist_circumference = FloatField(u'Wrist circumference', validators=[InputRequired(), NumberRange(20,30)], render_kw={'um': 'cm'})
-    arm_circumference = FloatField(u'Arm circumference', validators=[InputRequired(), NumberRange(25,40)], render_kw={'um': 'cm'})
+    wrist_circumference = FloatField(u'Wrist circumference', validators=[InputRequired(), NumberRange(10,30)], render_kw={'um': 'cm'})
+    arm_circumference = FloatField(u'Arm circumference', validators=[InputRequired(), NumberRange(10,40)], render_kw={'um': 'cm'})
     
     submit = SubmitField(u'Start test')
 
