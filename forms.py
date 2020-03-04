@@ -1,7 +1,7 @@
 import json
 from flask_wtf import FlaskForm
 from wtforms.widgets import HiddenInput, TextInput
-from wtforms.fields import SelectField, IntegerField, SubmitField, StringField, Field, HiddenField
+from wtforms.fields import SelectField, IntegerField, SubmitField, StringField, Field, HiddenField, FloatField
 from wtforms.validators import NumberRange, InputRequired
 
 class JSONField(Field):
@@ -50,8 +50,8 @@ class DataForm(FlaskForm):
         choices=[('r', 'Right'), ('l', 'Left'), ('a', 'Ambidextrous')],
         validators=[InputRequired()]
     )
-    wrist_circumference = IntegerField(u'Wrist circumference', validators=[InputRequired(), NumberRange(20,30)], render_kw={'um': 'cm'})
-    arm_circumference = IntegerField(u'Arm circumference', validators=[InputRequired(), NumberRange(25,40)], render_kw={'um': 'cm'})
+    wrist_circumference = FloatField(u'Wrist circumference', validators=[InputRequired(), NumberRange(20,30)], render_kw={'um': 'cm'})
+    arm_circumference = FloatField(u'Arm circumference', validators=[InputRequired(), NumberRange(25,40)], render_kw={'um': 'cm'})
     
     submit = SubmitField(u'Start test')
 
