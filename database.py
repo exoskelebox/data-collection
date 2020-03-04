@@ -15,8 +15,8 @@ SCHEMA = {
         subject_fitness SMALLINT NOT NULL CHECK (subject_fitness >= 0 AND subject_fitness <= 7),
         subject_handedness CHAR(1) NOT NULL CHECK (subject_handedness IN ('r','l')),
         subject_impairment BOOLEAN NOT NULL,
-        subject_wrist_circumference REAL NOT NULL CHECK (subject_wrist_circumference >= 20 AND subject_wrist_circumference <= 30),
-        subject_forearm_circumference REAL NOT NULL CHECK (subject_forearm_circumference >= 25 AND subject_forearm_circumference <= 40)
+        subject_wrist_circumference REAL NOT NULL CHECK (subject_wrist_circumference >= 10 AND subject_wrist_circumference <= 30),
+        subject_forearm_circumference REAL NOT NULL CHECK (subject_forearm_circumference >= 10 AND subject_forearm_circumference <= 40)
     )
     """,
     'data': """ 
