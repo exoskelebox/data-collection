@@ -5,22 +5,23 @@
 <form action="" method="POST" novalidate>
     {{ form.hidden_tag() }}
 
-    <img id="image" src="{{ form.image.data }}" class="img-fluid img-thumbnail mx-auto d-block mb-2" alt="Responsive image">
+    <img id="image" src="{{ form.image.data }}" class="img-fluid img-thumbnail mx-auto d-block mb-2"
+        alt="Responsive image">
 
     <p id="repetition" class="lead" style="white-space: pre-line;">{{ status }}</p>
     <p id="test" class="lead"></p>
 
-    <p class="text-justify text-info">Position your right hand as shown. When your hand is in position, you can start
-        the test by clicking on the
-        'start' button or pressing any key on the keyboard to start the data collection. When the test starts an overlay
-        will show up, once the overlay disappears the test is complete. During the test it is important you keep
-        your hand as still as possible. If you want to redo a previous test, click the 'previous' button. If you do
-        not wish to continue with more tests, you can click the 'end' button.</p>
+    <p class="text-justify text-info" style="max-width: 800px;">Position your right hand as shown. When the calibration starts an overlay will
+        show up, once the overlay disappears the calibration is complete. During the calibration it is important you
+        keep your hand as still as possible. When your hand is in position, you can start
+        the calibration by clicking on the 'start' button. If you want to redo a previous calibration, click the
+        'previous' button. If you do not wish to continue, you can click the 'end' button.</p>
 
-    <p class="lead">
+    <p class="lead" style="max-width: 800px;">
         <button type="button" class="btn btn-warning btn-lg mr-4" role="button" onclick="prev()">Previous</a>
-        <button type="button" class="btn btn-danger btn-lg" role="button" onclick="end()">End</button>
-        <button type="button" class="btn btn-primary btn-lg float-right" role="button" onclick="start()">Start</button>
+            <button type="button" class="btn btn-danger btn-lg" role="button" onclick="end()">End</button>
+            <button type="button" class="btn btn-primary btn-lg float-right" role="button"
+                onclick="start()">Start</button>
     </p>
 </form>
 
@@ -28,7 +29,7 @@
 
 {% block scripts %}
 {{ super() }}
-<script type=text/javascript> 
+<script type=text/javascript>
 $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 
 document.addEventListener('keydown', function(event) {
@@ -73,5 +74,5 @@ function end() {
     }
 }
 
-</script> 
+</script>
 {% endblock %}

@@ -3,24 +3,26 @@
 
 {% block content %}
 <div class="container mt-3">
-  
+
 
   <div id="plan">
     <div class="row">
       <div class="col-lg-8 col-md-8">
         <h1>Want to help build better exoskeletons in the future?</h1>
         <p style="text-align: justify">
-          We are a research group at Aalborg University attempting to break new ground in the field of gesture recognition, and we need your data to do so!
-          We will collect data such as your age, gender, fitness as well as
-          record your arm / wrist while you do different gestures. That is to say, 
-          we will not collect any personally identifiable information (PII) such as your name etc.
+          We are a research group at Aalborg University attempting to break new ground in the field of gesture
+          recognition, and we need your data to do so. We will collect data such as your age, gender, fitness as well as
+          record your arm / wrist while you do different gestures. That is to say, we will <strong>not</strong> collect
+          any personally identifiable information (PII) such as your name, address etc. <strong class="bg-danger">By participating in
+          our data collection, you agree to have your data shared in a public datset.</strong> We share the data such that our
+          results may be reproduced and improved upon in the future.
         </p>
-        <a class="btn btn-primary btn-lg btn-block" href="/form" target="_blank">Get started (~20 minutes)</a>
+        <a class="btn btn-primary btn-lg btn-block" href="/form" target="_blank">Click here to get started (15-20 minutes)</a>
       </div>
 
       <div class="col-lg-4 col-md-4 d-md-block d-none">
         <img src="{{ url_for('static', filename='img/secure_data.svg') }}" class="img-fluid align-top" alt="">
       </div>
     </div>
-</div>
-{%- endblock %}
+  </div>
+  {%- endblock %}
