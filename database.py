@@ -39,7 +39,25 @@ SCHEMA = {
         PRIMARY KEY (subject_id, calibration_gesture)
     )
     """,
+    'calibration_view':"""
+    CREATE VIEW combined_calibration AS 
+        SELECT arm.subject_id, arm.calibration_iterations as arm_calibration_iterations, arm.calibration_values as arm_calibration_values,
+                    wrist.calibration_iterations as wrist_calibration_iterations, wrist.calibration_values as wrist_calibration_values 
+        FROM calibration AS wrist 
+        JOIN calibration AS arm ON (arm.subject_id=wrist.subject_id AND arm.calibration_gesture LIKE 'arm%' AND wrist.calibration_gesture LIKE 'wrist%')
+    """,
+    'training_view':"""
+    CREATE VIEW training AS 
+        SELECT * FROM subjects 
+        JOIN data USING (subject_id)
+        JOIN combined_calibration USING (subject_id)
+    """
 }
+
+"""
+
+
+"""
 
 # region INSERT handling
 
@@ -230,7 +248,7 @@ def clear_existing_data(metadata) -> int:
 # region SELECT handling
 
 
-def get_all(table) -> list:
+def get_all(table, annotated=False) -> list:
     """ 
     Get all rows from table.
     """
@@ -240,22 +258,23 @@ def get_all(table) -> list:
         cur = conn.cursor()
         cur.execute(f"SELECT * FROM {table}")
         print("The number of entries: ", cur.rowcount)
-        row = cur.fetchone()
-
-        while row is not None:
-            print(row)
-            row = cur.fetchone()
-
+        
+        # get the result back
+        result = cur.fetchall()
+        if annotated: 
+            colnames = [desc[0] for desc in cur.description]
+            result = [y for y in map(lambda x: dict(zip(colnames, x)), result)]
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
     finally:
         if conn is not None:
             conn.close()
+    return result
 
-def get_where(table, context) -> list:
+def get_equals(table, context, annotated=False) -> list:
     """ 
-    Get all rows from table matching context.
+    Get all rows from table equaling context.  If anotated=True will return as tuples (column_name, value,).
     """
     columns, values = context.keys(), context.values()
     where = ' AND '.join(['='.join([column, '%s']) for column in columns])
@@ -270,6 +289,38 @@ def get_where(table, context) -> list:
         cur.execute(sql, (*values,))
         # get the result back
         result = cur.fetchall()
+        if annotated: 
+            colnames = [desc[0] for desc in cur.description]
+            result = [y for y in map(lambda x: dict(zip(colnames, x)), result)]
+        # close communication with the database
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        raise error
+    finally:
+        if conn is not None:
+            conn.close()
+    return result
+
+def get_where(table, where, values, annotated=False) -> list:
+    """ 
+    Get all rows from table matching where statement. If anotated=True will return as tuples (column_name, value,).
+    """
+    sql = f"SELECT * FROM {table} WHERE ({where});"
+    result = None
+    conn = None
+    try:
+        conn = _connect()
+        # create a new cursor
+        cur = conn.cursor()
+        # execute the sql statement
+        cur.execute(sql, (*values,))
+
+        # get the result back
+        result = cur.fetchall()
+        if annotated: 
+            colnames = [desc[0] for desc in cur.description]
+            result = [y for y in map(lambda x: dict(zip(colnames, x)), result)]
+
         # close communication with the database
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
@@ -411,11 +462,8 @@ def reset_all() -> None:
     Drop all tables and recreate.
     """
     print('Resetting everything')
-
-    reset('calibration')
-    reset('data')
-    reset('subjects', cascade=True)
-
+    for table in SCHEMA:
+        reset(table, cascade=True)
     print('Reset done')
 # endregion
 
@@ -433,7 +481,6 @@ def _insert_dummy_subject():
     subject_id = insert_subject(subject)
     return subject_id
 
-
 def _insert_dummy_data(sid):
     data = {
         'subject_id': sid,
@@ -445,12 +492,12 @@ def _insert_dummy_data(sid):
     }
     insert_data(data)
 
-
 def _insert_dummy_calibrations(sid):
+    locs = ['arm', 'wrist']
     for i in range(2):
         calibration = {
             'subject_id': sid,
-            'calibration_gesture': f"dummy gesture {i+1}",
+            'calibration_gesture': f"{locs[i]} dummy gesture",
             'calibration_iterations': random.randint(0, 125),
             'calibration_values': [random.randint(5, 155) for _ in range(8-i)],
         }
@@ -474,7 +521,6 @@ def _insert_dummy_data_repetitions(sid, n=10) -> None:
         insert_data_repetition(data)
     print('Data inserted')
 
-
 def _insert_dummies(n=1):
     for _ in range(n):
         sid = _insert_dummy_subject()
@@ -484,4 +530,11 @@ def _insert_dummies(n=1):
 # endregion
 
 if __name__ == "__main__":
-    setup()
+    #reset_all()
+    #_insert_dummies(10)
+    print(get_all('combined_calibration'))
+    res = get_where('training', "subject_id<=%s AND gesture LIKE %s AND repetition=%s AND reading_count=%s", (3, '%1', 1, 5,))
+    for r in res:
+        print(r)
+    #print(_insert("SELECT COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_NAME = %s;", ('training',), returning=True))
+    #print(_insert("SELECT * FROM training WHERE %s;", (False,), returning=True))
