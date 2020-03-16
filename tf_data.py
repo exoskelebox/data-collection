@@ -10,21 +10,35 @@ from typing import List, Tuple
 import types
 
 # A utility method to identify test data
-def is_test(x) -> bool:
+def is_test(x,y) -> bool:
     return x['reading_count'] % 5 == 0
 # A utility method to identify training data
-def is_training(x) -> bool:
-    return not is_test(x)
+def is_training(x,y) -> bool:
+    return not is_test(x,y)
+
+def split(dataset, split) -> (tf.data.Dataset, tf.data.Dataset):
+    recover = lambda x,y: y
+    is_a = lambda x,y: x % split != 0
+    is_b = lambda x,y: not is_a(x,y)
+    a_dataset = dataset.enumerate() \
+                        .filter(is_a) \
+                        .map(recover)
+    b_dataset = dataset.enumerate() \
+                        .filter(is_b) \
+                        .map(recover)
+    return a_dataset, b_dataset
+
 
 # A utility method to create a feature column
 # and to transform a batch of data
 def demo(feature_column, example_batch) -> None:
     feature_layer = tf.keras.layers.DenseFeatures(feature_column)
+    features, labels = example_batch
     print(feature_column.name)
-    print(feature_layer(example_batch).numpy())
+    print(feature_layer(features).numpy())
 
 feature_column_constructors = {
-    'subject_id': None, # TODO: Decide if this should be included
+    'subject_id': lambda x=None: get_numeric_column('subject_id', tf.uint16, x), # TODO: Decide if this should be included
     'subject_gender': lambda x=None: get_indicator_column('subject_gender', ['m', 'f'], x),
     'subject_age': lambda x=None: get_bucketized_column('subject_age', [18, 25, 30, 35, 40, 45, 50, 55, 60, 65], tf.uint8, x),
     'subject_fitness': lambda x=None: get_bucketized_column('subject_fitness', [2, 4, 6, 8], tf.uint8, x),
@@ -33,7 +47,7 @@ feature_column_constructors = {
     'subject_wrist_circumference': lambda x=None: get_numeric_column('subject_wrist_circumference', tf.float32, x),
     'subject_forearm_circumference': lambda x=None: get_numeric_column('subject_forearm_circumference', tf.float32, x),
     'gesture': None, # TODO: Handle Label
-    'repetition': lambda x=None: get_numeric_column('repetition', tf.uint8, x),
+    'repetition': None,
     'reading_count': lambda x=None: get_numeric_column('reading_count', tf.uint16, x),
     'timestamp': None, # TODO: Handle timestamps
     'readings': lambda x=None: get_numeric_array_column('readings', 15, tf.uint8, x), 
@@ -44,7 +58,7 @@ feature_column_constructors = {
     'wrist_calibration_iterations': lambda x=None: get_numeric_column('wrist_calibration_iterations', tf.uint16, x),
     'wrist_calibration_values': lambda x=None: get_numeric_array_column('wrist_calibration_values', 7, tf.uint8, x),
 }
-GESTURE_SET = []
+
 def get_feature_columns(example_batch) -> List['feature_column']:
     print(example_batch)
     columns = []
@@ -86,9 +100,31 @@ def get_indicator_column(name, vocabulary, example_batch=None) -> feature_column
         demo(column_one_hot, example_batch) 
     return column_one_hot
 
-def get_data(timestamps=False) -> Tuple[tf.data.Dataset]: 
+LABEL = 'gesture'
+FEATURES = [
+        'subject_id',
+        'subject_gender',
+        'subject_age',
+        'subject_fitness',
+        'subject_handedness',
+        'subject_impairment',
+        'subject_wrist_circumference',
+        'subject_forearm_circumference',
+        #'gesture',
+        #'repetition',
+        'reading_count',
+        #'timestamp',
+        'readings',
+        #'wrist_calibration_gesture',
+        'wrist_calibration_iterations',
+        'wrist_calibration_values',
+        #'arm_calibration_gesture',
+        'arm_calibration_iterations',
+        'arm_calibration_values',
+]
+def get_data(features=FEATURES, label=LABEL) -> Tuple[tf.data.Dataset]: 
     """
-    Retreives data from database. If timestamps = False (default) will discard timestamps.
+    Retreives data from database.
     Returns (train, test) tf.data.Datasets.
     """
     data = db.get_all('training', True)
@@ -99,7 +135,8 @@ def get_data(timestamps=False) -> Tuple[tf.data.Dataset]:
     else: 
         print(data)
 
-    data_batched = {k:[d[k] for d in data] for k in data[0] if timestamps or k != 'timestamp'} # discards timestamps if timestamps = False
+    data_batched = {k:[d[k] for d in data] for k in data[0] if k in features}
+    labels = {'label':[d[k] for d in data] for k in data[0] if k == label}
 
     # Convert timestamps to iso format
     if 'timestamp' in data_batched.keys():
@@ -114,7 +151,7 @@ def get_data(timestamps=False) -> Tuple[tf.data.Dataset]:
         print(data_batched['subject_impairment'][:5])
 
 
-    tf_data = tf.data.Dataset.from_tensor_slices(data_batched)
+    tf_data = tf.data.Dataset.from_tensor_slices((data_batched, labels))
     print(len(list(tf_data)))
     #print(list(tf_data))
 
@@ -126,45 +163,62 @@ def get_data(timestamps=False) -> Tuple[tf.data.Dataset]:
 
     return train, test
 
+
+
 def run_model(train, test) -> None:
-    
     batch_size = 5 # A small batch sized is used for demonstration purposes
     train = train.shuffle(buffer_size=len(list(train))).batch(batch_size)
-    test = test.shuffle(buffer_size=len(list(test))).batch(batch_size)
-    
-    # We will use this batch to demonstrate several types of feature columns
+
+    test = test.shuffle(buffer_size=len(list(test)))
+    test, val = split(test, 5)
+    test = test.batch(batch_size)
+    val = val.batch(batch_size)
+
+
+    # We will use this batch to demonstrate feature columns
     example_batch = next(iter(train))
 
     feature_columns = get_feature_columns(example_batch)
-    return
     feature_layer = tf.keras.layers.DenseFeatures(feature_columns)
 
-
+    print('Feature layer constructed.')
+    print('Constructing model...')
     model = tf.keras.Sequential([
         feature_layer,
         tf.keras.layers.Dense(128, activation='relu'),
         tf.keras.layers.Dense(128, activation='relu'),
-        tf.keras.layers.Dense(12, activation='softmax')
+        tf.keras.layers.Dense(5, activation='softmax')
     ])
     
+    print('Model constructed. Compiling...')
     model.compile(optimizer='adam',
                 loss='categorical_crossentropy',
                 metrics=['accuracy'])
+
+    print('Model compiled.')
+    print('Creating callbacks...')
 
     earlystop_callback = tf.keras.callbacks.EarlyStopping(
     monitor='val_accuracy', min_delta=0.0001,
     patience=3)
 
-    model.fit(train_ds,
-            validation_data=val_ds,
+    print('Callbacks created.')
+    print('Fitting model...')
+    model.fit(train,
+            validation_data=val,
             epochs=20,
             callbacks=[earlystop_callback])
 
-    result = model.evaluate(test_ds)
+    print('Model fitted.')
+    print('Evaluating model...')
+    result = model.evaluate(test)
     print(result)
+    print('Model Evaluated.')
 
 def main():
     train, test = get_data()
     run_model(train, test)
+
+
 if __name__ == "__main__":
     main()
