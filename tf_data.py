@@ -1,13 +1,8 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-import numpy as np
-import pandas as pd
 import tensorflow as tf
 from tensorflow import feature_column
-from sklearn.model_selection import train_test_split
 import database as db
 import typing
 from typing import List, Tuple
-import types
 
 # A utility method to identify test data
 def is_test(x,y) -> bool:
